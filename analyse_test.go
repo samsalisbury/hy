@@ -29,14 +29,24 @@ type (
 	}
 )
 
+var nodePtr = new(Node)
+
 var badAnalysesTable = map[string]interface{}{
-	"cannot analyse nil": nil,
+	"cannot analyse nil":                                        nil,
+	"failed to analyse int: cannot analyse kind int":            1,
+	"failed to analyse string: cannot analyse kind string":      "",
+	"failed to analyse *hy.Node: cannot analyse kind interface": new(Node),
+	"failed to analyse **hy.Node: cannot analyse kind ptr":      &nodePtr,
 }
 
 func TestAnalyse_failure(t *testing.T) {
 	c := NewCodec()
 	for expected, input := range badAnalysesTable {
 		node, actualErr := c.Analyse(input)
+		if actualErr == nil || node != nil {
+			t.Errorf("got (%v, error %q); want (nil, error %q)", node, actualErr, expected)
+			continue
+		}
 		if node != nil {
 			t.Errorf("got node %v; want nil", node)
 		}

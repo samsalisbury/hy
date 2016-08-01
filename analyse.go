@@ -59,7 +59,7 @@ func (c *Codec) Analyse(root interface{}) (Node, error) {
 	}
 	n, err := c.analyse(nil, reflect.TypeOf(root), "")
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to analyse %T", root)
 	}
 	return *n, err
 }
@@ -90,7 +90,7 @@ func (c *Codec) analyse(parent Node, t reflect.Type, fieldName string) (*Node, e
 	base := NodeBase{Parent: parent, NodeID: nodeID}
 	switch k {
 	default:
-		return nil, errors.Errorf("cannot analyse %s (%T)", k, t)
+		return nil, errors.Errorf("cannot analyse kind %s", k)
 	case reflect.Struct:
 		*n, err = c.analyseStruct(base)
 	case reflect.Map:
