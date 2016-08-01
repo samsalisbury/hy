@@ -39,7 +39,7 @@ var badAnalysesTable = map[string]interface{}{
 	"failed to analyse **hy.Node: cannot analyse kind ptr":      &nodePtr,
 }
 
-func TestAnalyse_failure(t *testing.T) {
+func TestCodec_Analyse_failure(t *testing.T) {
 	c := NewCodec()
 	for expected, input := range badAnalysesTable {
 		node, actualErr := c.Analyse(input)
@@ -59,7 +59,7 @@ var goodAnalysesTable = map[ExpectedStructAnalysis]interface{}{
 	{NumChildren: 5, NumFields: 4, IsPtr: true}: &StructA{},
 }
 
-func TestAnalyse_success(t *testing.T) {
+func TestCodec_Analyse_struct_success(t *testing.T) {
 	c := NewCodec()
 	for expected, input := range goodAnalysesTable {
 		actual, err := c.Analyse(input)
