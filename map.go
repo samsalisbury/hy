@@ -12,24 +12,30 @@ type MapNode struct {
 	KeyType reflect.Type
 }
 
-func analyseMap(base NodeBase, t reflect.Type, isPtr bool) (Node, error) {
-	child, err := analyse(t.Elem())
-	if err != nil {
-		return nil, errors.Wrapf(err, "analysing map element type %T failed", t.Elem())
+func (c *Codec) analyseMap(base NodeBase) (Node, error) {
+	n := &MapNode{
+		DirNodeBase: DirNodeBase{
+			NodeBase: base,
+		},
 	}
-	return &MapNode{
-		DirNodeBase: DirNodeBase{ElemNode: child},
-		KeyType:     t.Key(),
-	}, nil
+	elemType := n.Type.Elem()
+	elemNode, err := c.analyse(n, elemType, "")
+	if err != nil {
+		return nil, errors.Wrapf(err, "analysing type %T failed", elemType)
+	}
+	n.KeyType = n.Type.Key()
+	n.ElemNode = elemNode
+	return n, nil
 }
 
 func (n *MapNode) Write(c NodeContext, v reflect.Value) error {
-	for _, k := range v.MapKeys() {
-		indexString := "name"
-		elemContext := c.Push(Tag{}, indexString)
-		if err := n.ElemNode.Write(elemContext, v.MapIndex(k)); err != nil {
-			return errors.Wrapf(err, "writing index %q", indexString)
-		}
-	}
+	//for _, k := range v.MapKeys() {
+	//	indexString := "name"
+	//	elemContext := c.Push(Tag{}, indexString)
+	//	if err := n.ElemNode.Write(elemContext, v.MapIndex(k)); err != nil {
+	//		return errors.Wrapf(err, "writing index %q", indexString)
+	//	}
+	//}
+	//return nil
 	return nil
 }

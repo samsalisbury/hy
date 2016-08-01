@@ -11,6 +11,6 @@ func (n *SliceDirNode) Write(c *NodeContext, v reflect.Value) error {
 	return nil
 }
 
-func analyseSlice(base NodeBase, t reflect.Type, isPtr bool) (Node, error) {
+func (c *Codec) analyseSlice(base NodeBase) (Node, error) {
 	return nil, nil
 }

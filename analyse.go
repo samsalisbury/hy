@@ -6,60 +6,65 @@ import (
 	"github.com/pkg/errors"
 )
 
-type analysisInContext struct {
+// NodeID identifies a node in the tree.
+type NodeID struct {
+	// ParentType is the type of this node's parent.
+	ParentType,
+	// Type is the type of this node.
 	Type reflect.Type
-	Path string
+	// IsPtr indicates if OwnType is a pointer really.
+	IsPtr bool
+	// FieldName is the name of the parent field containing this node. FieldName
+	// will be empty unless ParentType is a struct.
+	FieldName string
 }
 
-type nodeInContext struct {
-	Node    *Node
-	Context NodeContext
+// NodeSet is a set of Node pointers indexed by ID.
+type NodeSet struct {
+	nodes map[NodeID]*Node
 }
 
-// analyses is global state and should probably be removed
-// using Node pointer so we can all refer to the same Node
-var analyses = map[analysisInContext]nodeInContext{}
+// NewNodeSet creates a new node set.
+func NewNodeSet() NodeSet {
+	return NodeSet{nodes: map[NodeID]*Node{}}
+}
 
-func getAnalysisForType(t reflect.Type) (*Node, bool) {
-	for aic, nic := range analyses {
-		if aic.Type == t {
-			return nic.Node, true
-		}
+// Register tries to register a node ID. If the ID is not yet registered, it
+// returns a new node pointer and true. Otherwise it returns the already
+// registered node pointer and false.
+func (ns NodeSet) Register(id NodeID) (*Node, bool) {
+	n, ok := ns.nodes[id]
+	if ok {
+		return n, false
 	}
-	return nil, false
+	n = new(Node)
+	ns.nodes[id] = n
+	return n, true
 }
 
-func registerAnalysis(t reflect.Type, n *Node, c NodeContext) {
-	analyses[analysisInContext{t, c.Path()}] = nodeInContext{n, c}
+// Codec provides the primary encoding and decoding facility of this package.
+type Codec struct {
+	Nodes NodeSet
 }
 
-var nodesByType = map[reflect.Type]*Node{}
-
-func registerNodeForType(t reflect.Type, n *Node) {
-	nodesByType[t] = n
+// NewCodec creates a new codec.
+func NewCodec() *Codec {
+	return &Codec{Nodes: NewNodeSet()}
 }
-func getNodeForType(t reflect.Type) (*Node, bool) {
-	n, ok := nodesByType[t]
-	return n, ok
-}
-
-var paths = map[string]Node{}
 
 // Analyse analyses a tree starting at root.
-func Analyse(root interface{}) (Node, error) {
+func (c *Codec) Analyse(root interface{}) (Node, error) {
 	if root == nil {
 		return nil, errors.New("cannot analyse nil")
 	}
-	return analyse(reflect.TypeOf(root))
+	n, err := c.analyse(nil, reflect.TypeOf(root), "")
+	if err != nil {
+		return nil, err
+	}
+	return *n, err
 }
 
-func analyse(t reflect.Type) (Node, error) {
-	if analysis, ok := getNodeForType(t); ok {
-		return *analysis, nil
-	}
-	// allocate the node now, child nodes can refer to it
-	n := new(Node)
-	registerNodeForType(t, n)
+func (c *Codec) analyse(parent Node, t reflect.Type, fieldName string) (*Node, error) {
 	var isPtr bool
 	k := t.Kind()
 	if k == reflect.Ptr {
@@ -67,20 +72,31 @@ func analyse(t reflect.Type) (Node, error) {
 		t = t.Elem()
 		k = t.Kind()
 	}
-	var err error
-	base := NodeBase{
-		OwnType: t,
-		IsPtr:   isPtr,
+	var parentType reflect.Type
+	if parent != nil {
+		parentType = parent.ID().Type
 	}
+	nodeID := NodeID{
+		ParentType: parentType,
+		Type:       t,
+		IsPtr:      isPtr,
+		FieldName:  fieldName,
+	}
+	n, new := c.Nodes.Register(nodeID)
+	if !new {
+		return n, nil
+	}
+	var err error
+	base := NodeBase{Parent: parent, NodeID: nodeID}
 	switch k {
 	default:
 		return nil, errors.Errorf("cannot analyse %s (%T)", k, t)
 	case reflect.Struct:
-		*n, err = analyseStruct(base, t, isPtr)
+		*n, err = c.analyseStruct(base)
 	case reflect.Map:
-		*n, err = analyseMap(base, t, isPtr)
+		*n, err = c.analyseMap(base)
 	case reflect.Slice:
-		*n, err = analyseSlice(base, t, isPtr)
+		*n, err = c.analyseSlice(base)
 	}
-	return *n, errors.Wrapf(err, "analysing %s failed", t)
+	return n, errors.Wrapf(err, "analysing %s failed", t)
 }

@@ -4,7 +4,7 @@ import "reflect"
 
 // Node represents a generic node in the structure.
 type Node interface {
-	Type() reflect.Type
+	ID() NodeID
 	Write(NodeContext, reflect.Value) error
 	//Read(NodeContext)
 }

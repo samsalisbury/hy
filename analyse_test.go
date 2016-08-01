@@ -34,8 +34,9 @@ var badAnalysesTable = map[string]interface{}{
 }
 
 func TestAnalyse_failure(t *testing.T) {
+	c := NewCodec()
 	for expected, input := range badAnalysesTable {
-		node, actualErr := Analyse(input)
+		node, actualErr := c.Analyse(input)
 		if node != nil {
 			t.Errorf("got node %v; want nil", node)
 		}
@@ -52,8 +53,9 @@ var goodAnalysesTable = map[ExpectedStructAnalysis]interface{}{
 }
 
 func TestAnalyse_success(t *testing.T) {
+	c := NewCodec()
 	for expected, input := range goodAnalysesTable {
-		actual, err := Analyse(input)
+		actual, err := c.Analyse(input)
 		if err != nil {
 			t.Error(err)
 			continue
@@ -65,7 +67,8 @@ func TestAnalyse_success(t *testing.T) {
 }
 
 func getStructChildNode(s interface{}, name string) (Node, error) {
-	root, err := Analyse(StructA{})
+	c := NewCodec()
+	root, err := c.Analyse(StructA{})
 	if err != nil {
 		return nil, err
 	}
@@ -77,10 +80,10 @@ func getStructChildNode(s interface{}, name string) (Node, error) {
 	if !ok {
 		return nil, fmt.Errorf("%T does not have a child %s", s, name)
 	}
-	return n, nil
+	return *n, nil
 }
 
-func TestAnalyse_mapDir(t *testing.T) {
+func TestCodec_Analyse_mapDir(t *testing.T) {
 	child, err := getStructChildNode(StructA{}, "Map")
 	if err != nil {
 		t.Fatal(err)

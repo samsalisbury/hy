@@ -11,43 +11,42 @@ type Struct struct {
 	File
 	// Fields is a map of simple struct field names to their types.
 	Fields map[string]reflect.Type
-	// Children is a map of
-	Children map[string]Node
+	// Children is a map of field named to node pointers.
+	Children map[string]*Node
 }
 
 func (n *Struct) Write(c NodeContext, v reflect.Value) error {
 	return nil
 }
 
-func analyseStruct(base NodeBase, t reflect.Type, isPtr bool) (Node, error) {
-	fields := map[string]reflect.Type{}
-	children := map[string]Node{}
-	for i := 0; i < t.NumField(); i++ {
-		field := t.Field(i)
+func (c *Codec) analyseStruct(base NodeBase) (Node, error) {
+	// Children need a pointer to this node, so create it first.
+	n := &Struct{
+		File: File{
+			NodeBase: base,
+		},
+		Fields:   map[string]reflect.Type{},
+		Children: map[string]*Node{},
+	}
+	for i := 0; i < n.Type.NumField(); i++ {
+		field := n.Type.Field(i)
 		tagStr := field.Tag.Get("hy")
 		tag, err := parseTag(tagStr)
 		if err != nil {
 			return nil, errors.Wrapf(err, "invalid tag %q", tagStr)
 		}
 		if tag.None {
-			fields[field.Name] = field.Type
+			n.Fields[field.Name] = field.Type
 			continue
 		}
 		if tag.Ignore {
 			continue
 		}
-		//childContext := base.Context.Push(tag, field.Name)
-		child, err := analyse(field.Type)
+		child, err := c.analyse(n, field.Type, field.Name)
 		if err != nil {
-			return nil, errors.Wrapf(err, "analysing file field %T.%s", t, field.Name)
+			return nil, errors.Wrapf(err, "analysing %T.%s", n.Type, field.Name)
 		}
-		children[field.Name] = child
+		n.Children[field.Name] = child
 	}
-	return &Struct{
-		File: File{
-			NodeBase: base,
-		},
-		Fields:   fields,
-		Children: children,
-	}, nil
+	return n, nil
 }
