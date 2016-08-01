@@ -8,7 +8,8 @@ import (
 
 // Tag contains a parsed struct field tag.
 type Tag struct {
-	Ignore bool
+	Ignore,
+	IsDir bool
 	PathName,
 	Key,
 	SetKey string
@@ -38,23 +39,27 @@ func parseTag(tagString string) (Tag, error) {
 	if pathName == "" {
 		return Tag{}, errors.Errorf("name must not be empty")
 	}
-	pathName, err := parsePathName(pathName)
+	pathName, isDir, err := parsePathName(pathName)
 	if err != nil {
 		return Tag{}, errors.Wrapf(err, "path name %q invalid", pathName)
 	}
 	return Tag{
+		IsDir:    isDir,
 		PathName: pathName,
 		Key:      key,
 		SetKey:   setKey,
 	}, nil
 }
 
-func parsePathName(pathName string) (string, error) {
-	pathNameSuffix := pathName[:len(pathName)-1]
+func parsePathName(pathName string) (string, bool, error) {
+	if strings.HasPrefix(pathName, "/") {
+		return pathName, false, errors.Errorf("must not begin with /")
+	}
+	pathNameSuffix := pathName[len(pathName)-1:]
 	switch pathNameSuffix {
 	default:
-		return pathName, nil
+		return pathName, false, nil
 	case "/":
-		return strings.TrimSuffix(pathName, "/"), nil
+		return strings.TrimSuffix(pathName, "/"), true, nil
 	}
 }
