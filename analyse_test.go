@@ -15,8 +15,8 @@ type (
 		FileMap        map[string]StructB `hy:"."`
 		Map            map[string]StructB `hy:"./"`
 		EmbeddedSlice  []string
-		FileSlice      []string `hy:"."`
-		DirSlice       []string `hy:"./"`
+		FileSlice      []string   `hy:"."`
+		Slice          []*StructB `hy:"./"`
 	}
 	StructB struct {
 		Name          string
@@ -101,7 +101,34 @@ func TestCodec_Analyse_mapNode(t *testing.T) {
 	}
 	stringType := reflect.TypeOf("")
 	if mapNode.KeyType != stringType {
-		t.Fatalf("got key type %s; want %s", mapNode.KeyType, stringType)
+		t.Errorf("got key type %s; want %s", mapNode.KeyType, stringType)
+	}
+	structBType := reflect.TypeOf(StructB{})
+	elemType := (*mapNode.ElemNode).ID().Type
+	if elemType != structBType {
+		t.Errorf("got elem type %s; want %s", elemType, structBType)
+	}
+	if (*mapNode.ElemNode).ID().IsPtr {
+		t.Errorf("got true for IsPtr; want false")
+	}
+}
+
+func TestCodec_Analyse_sliceNode(t *testing.T) {
+	child, err := getStructChildNode(StructA{}, "Slice")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sliceNode, ok := child.(*SliceNode)
+	if !ok {
+		t.Fatalf("got at %T; want *SliceNode", child)
+	}
+	structBType := reflect.TypeOf(StructB{})
+	elemType := (*sliceNode.ElemNode).ID().Type
+	if elemType != structBType {
+		t.Errorf("got a %s; want %s", elemType, structBType)
+	}
+	if !(*sliceNode.ElemNode).ID().IsPtr {
+		t.Errorf("got false for IsPtr; want true")
 	}
 }
 

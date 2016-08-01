@@ -7,6 +7,7 @@ type NodeBase struct {
 	Parent Node
 }
 
+// ID returns the ID of this node base.
 func (base NodeBase) ID() NodeID {
 	return base.NodeID
 }
