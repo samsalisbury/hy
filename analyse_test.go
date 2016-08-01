@@ -44,11 +44,8 @@ func TestAnalyse_failure(t *testing.T) {
 	for expected, input := range badAnalysesTable {
 		node, actualErr := c.Analyse(input)
 		if actualErr == nil || node != nil {
-			t.Errorf("got (%v, error %q); want (nil, error %q)", node, actualErr, expected)
+			t.Errorf("got (%v, %q); want (nil, %q)", node, actualErr, expected)
 			continue
-		}
-		if node != nil {
-			t.Errorf("got node %v; want nil", node)
 		}
 		actual := actualErr.Error()
 		if actual != expected {
@@ -82,7 +79,7 @@ func getStructChildNode(s interface{}, name string) (Node, error) {
 	if err != nil {
 		return nil, err
 	}
-	structNode, ok := root.(*Struct)
+	structNode, ok := root.(*StructNode)
 	if !ok {
 		return nil, fmt.Errorf("got %T; want *StructNode", root)
 	}
@@ -93,23 +90,23 @@ func getStructChildNode(s interface{}, name string) (Node, error) {
 	return *n, nil
 }
 
-func TestCodec_Analyse_mapDir(t *testing.T) {
+func TestCodec_Analyse_mapNode(t *testing.T) {
 	child, err := getStructChildNode(StructA{}, "Map")
 	if err != nil {
 		t.Fatal(err)
 	}
-	mapDir, ok := child.(*MapNode)
+	mapNode, ok := child.(*MapNode)
 	if !ok {
-		t.Fatalf("got a %T; want *Map", child)
+		t.Fatalf("got a %T; want *MapNode", child)
 	}
 	stringType := reflect.TypeOf("")
-	if mapDir.KeyType != stringType {
-		t.Fatalf("got key type %s; want %s", mapDir.KeyType, stringType)
+	if mapNode.KeyType != stringType {
+		t.Fatalf("got key type %s; want %s", mapNode.KeyType, stringType)
 	}
 }
 
 func (expected ExpectedStructAnalysis) Matches(n Node) error {
-	actual, ok := n.(*Struct)
+	actual, ok := n.(*StructNode)
 	if !ok {
 		return fmt.Errorf("got a %T; want *StructNode", n)
 	}

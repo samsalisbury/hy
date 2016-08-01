@@ -6,8 +6,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Struct represents a struct to be stored in a file.
-type Struct struct {
+// StructNode represents a struct to be stored in a file.
+type StructNode struct {
 	File
 	// Fields is a map of simple struct field names to their types.
 	Fields map[string]reflect.Type
@@ -15,13 +15,13 @@ type Struct struct {
 	Children map[string]*Node
 }
 
-func (n *Struct) Write(c NodeContext, v reflect.Value) error {
+func (n *StructNode) Write(c NodeContext, v reflect.Value) error {
 	return nil
 }
 
 func (c *Codec) analyseStruct(base NodeBase) (Node, error) {
 	// Children need a pointer to this node, so create it first.
-	n := &Struct{
+	n := &StructNode{
 		File: File{
 			NodeBase: base,
 		},

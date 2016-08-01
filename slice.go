@@ -2,12 +2,12 @@ package hy
 
 import "reflect"
 
-// A SliceDirNode represents a slice to be stored in a directory.
-type SliceDirNode struct {
+// A SliceNode represents a slice to be stored in a directory.
+type SliceNode struct {
 	DirNodeBase
 }
 
-func (n *SliceDirNode) Write(c *NodeContext, v reflect.Value) error {
+func (n *SliceNode) Write(c *NodeContext, v reflect.Value) error {
 	return nil
 }
 
