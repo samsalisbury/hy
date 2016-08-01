@@ -2,6 +2,7 @@ package hy
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 )
 
@@ -12,7 +13,7 @@ type (
 		FileStruct     StructB `hy:"."`
 		EmbeddedMap    map[string]string
 		FileMap        map[string]StructB `hy:"."`
-		DirMap         map[string]StructB `hy:"./"`
+		Map            map[string]StructB `hy:"./"`
 		EmbeddedSlice  []string
 		FileSlice      []string `hy:"."`
 		DirSlice       []string `hy:"./"`
@@ -63,8 +64,39 @@ func TestAnalyse_success(t *testing.T) {
 	}
 }
 
+func getStructChildNode(s interface{}, name string) (Node, error) {
+	root, err := Analyse(StructA{})
+	if err != nil {
+		return nil, err
+	}
+	structNode, ok := root.(*Struct)
+	if !ok {
+		return nil, fmt.Errorf("got %T; want *StructNode", root)
+	}
+	n, ok := structNode.Children[name]
+	if !ok {
+		return nil, fmt.Errorf("%T does not have a child %s", s, name)
+	}
+	return n, nil
+}
+
+func TestAnalyse_mapDir(t *testing.T) {
+	child, err := getStructChildNode(StructA{}, "Map")
+	if err != nil {
+		t.Fatal(err)
+	}
+	mapDir, ok := child.(*MapNode)
+	if !ok {
+		t.Fatalf("got a %T; want *Map", child)
+	}
+	stringType := reflect.TypeOf("")
+	if mapDir.KeyType != stringType {
+		t.Fatalf("got key type %s; want %s", mapDir.KeyType, stringType)
+	}
+}
+
 func (expected ExpectedStructAnalysis) Matches(n Node) error {
-	actual, ok := n.(*StructNode)
+	actual, ok := n.(*Struct)
 	if !ok {
 		return fmt.Errorf("got a %T; want *StructNode", n)
 	}
