@@ -3,7 +3,7 @@ package hy
 import "testing"
 
 var goodTagTable = map[Tag][]string{
-	Tag{}:                                                                  {""},
+	Tag{None: true}:                                                        {""},
 	Tag{Ignore: true}:                                                      {"-", "-,", "-,,"},
 	Tag{PathName: "mypath"}:                                                {"mypath", "mypath,", "mypath,,"},
 	Tag{PathName: "mypath", Key: "MyID"}:                                   {"mypath,MyID", "mypath,MyID,"},

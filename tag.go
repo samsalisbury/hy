@@ -8,6 +8,7 @@ import (
 
 // Tag contains a parsed struct field tag.
 type Tag struct {
+	None,
 	Ignore,
 	IsDir bool
 	PathName,
@@ -17,7 +18,7 @@ type Tag struct {
 
 func parseTag(tagString string) (Tag, error) {
 	if tagString == "" {
-		return Tag{}, nil
+		return Tag{None: true}, nil
 	}
 	var pathName, key, setKey string
 	parts := strings.Split(tagString, ",")
