@@ -35,7 +35,7 @@ type WriteContext struct {
 }
 
 // Push creates a derivative node context.
-func (c WriteContext) Push(tag Tag, pathName string) WriteContext {
+func (c WriteContext) Push(pathName string) WriteContext {
 	return WriteContext{
 		Parent:   &c,
 		PathName: pathName,

@@ -37,6 +37,23 @@ func (fts FileTargets) add(targets []*FileTarget) (FileTargets, error) {
 // Len returns the length.
 func (fts FileTargets) Len() int { return len(fts.m) }
 
+// Paths returns the paths of all file targets.
+func (fts FileTargets) Paths() []string {
+	paths := make([]string, len(fts.m))
+	i := 0
+	for k := range fts.m {
+		paths[i] = k
+		i++
+	}
+	return paths
+}
+
+// Snapshot returns the map this FileTargets represents.
+func (fts FileTargets) Snapshot() map[string]*FileTarget {
+	// TODO: Make this a copy.
+	return fts.m
+}
+
 // AddAll adds the contents of another FileTargets to this one.
 // Returns an error if any of them share a path.
 func (fts FileTargets) AddAll(other FileTargets) error {

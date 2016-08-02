@@ -74,7 +74,7 @@ func (c *Codec) analyse(parent Node, t reflect.Type, field FieldInfo) (*Node, er
 		return n, nil
 	}
 	var err error
-	base := NodeBase{NodeID: nodeID, Parent: parent, Tag: field.Tag}
+	base := NodeBase{NodeID: nodeID, Parent: parent, Tag: field.Tag, self: n}
 	switch k {
 	default:
 		return nil, errors.Errorf("cannot analyse kind %s", k)

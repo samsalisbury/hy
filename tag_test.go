@@ -3,14 +3,30 @@ package hy
 import "testing"
 
 var goodTagTable = map[Tag][]string{
-	Tag{None: true}:                                                        {""},
-	Tag{Ignore: true}:                                                      {"-", "-,", "-,,"},
-	Tag{PathName: "mypath"}:                                                {"mypath", "mypath,", "mypath,,"},
-	Tag{PathName: "mypath", Key: "MyID"}:                                   {"mypath,MyID", "mypath,MyID,"},
-	Tag{PathName: "mypath", Key: "MyID", SetKey: "SetMyID()"}:              {"mypath,MyID,SetMyID()"},
-	Tag{PathName: "mypath", IsDir: true}:                                   {"mypath/", "mypath/,", "mypath/,,"},
-	Tag{PathName: "mypath", IsDir: true, Key: "MyID"}:                      {"mypath/,MyID", "mypath/,MyID,"},
-	Tag{PathName: "mypath", IsDir: true, Key: "MyID", SetKey: "SetMyID()"}: {"mypath/,MyID,SetMyID()"},
+	Tag{None: true}: {
+		"",
+	},
+	Tag{Ignore: true}: {
+		"-", "-,", "-,,",
+	},
+	Tag{PathName: "mypath"}: {
+		"mypath", "mypath,", "mypath,,",
+	},
+	Tag{PathName: "mypath", Key: "MyID"}: {
+		"mypath,MyID", "mypath,MyID,",
+	},
+	Tag{PathName: "mypath", Key: "MyID", SetKey: "SetMyID()"}: {
+		"mypath,MyID,SetMyID()",
+	},
+	Tag{PathName: "mypath", IsDir: true}: {
+		"mypath/", "mypath/,", "mypath/,,",
+	},
+	Tag{PathName: "mypath", IsDir: true, Key: "MyID"}: {
+		"mypath/,MyID", "mypath/,MyID,",
+	},
+	Tag{PathName: "mypath", IsDir: true, Key: "MyID", SetKey: "SetMyID()"}: {
+		"mypath/,MyID,SetMyID()",
+	},
 }
 
 func TestParseTag_success(t *testing.T) {

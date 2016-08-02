@@ -1,6 +1,7 @@
 package hy
 
 import (
+	"path"
 	"reflect"
 
 	"github.com/pkg/errors"
@@ -15,8 +16,48 @@ type StructNode struct {
 	Children map[string]*Node
 }
 
-func (n *StructNode) Write(c NodeContext, v reflect.Value) error {
-	return nil
+// ChildPathName returns the path segment for this node's children.
+func (n *StructNode) ChildPathName(child Node, key, val reflect.Value) string {
+	name, ok := child.FixedPathName()
+	if !ok {
+		panic("child of struct must have fixed name")
+	}
+	return name
+}
+
+// WriteTargets generates file targets.
+func (n *StructNode) WriteTargets(c WriteContext, key, val reflect.Value) (FileTargets, error) {
+	writePath := path.Join(c.Path(), n.PathName(key, val))
+	fts := MakeFileTargets(len(n.Children) + 1)
+	if err := fts.Add(&FileTarget{
+		Path: writePath,
+		Data: n.prepareFileData(val),
+	},
+	); err != nil {
+		return fts, errors.Wrapf(err, "failed to write self")
+	}
+	for name, childPtr := range n.Children {
+		childNode := *childPtr
+		childKey := reflect.ValueOf(name)
+		childVal := val.FieldByName(name)
+		childContext := c.Push(childNode.PathName(childKey, childVal))
+		childTargets, err := childNode.WriteTargets(childContext, childKey, childVal)
+		if err != nil {
+			return fts, errors.Wrapf(err, "failed to write child %s", name)
+		}
+		if err := fts.AddAll(childTargets); err != nil {
+			return fts, errors.Wrapf(err, "failed to add targets from child %s", name)
+		}
+	}
+	return fts, nil
+}
+
+func (n *StructNode) prepareFileData(val reflect.Value) map[string]interface{} {
+	out := make(map[string]interface{}, len(n.Fields))
+	for name := range n.Fields {
+		out[name] = val.FieldByName(name).Interface()
+	}
+	return out
 }
 
 func (c *Codec) analyseStruct(base NodeBase) (Node, error) {

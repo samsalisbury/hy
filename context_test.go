@@ -4,7 +4,7 @@ import "testing"
 
 func TestWriteContext_Path(t *testing.T) {
 	c := WriteContext{}
-	c = c.Push(Tag{}, "foo").Push(Tag{}, "bar").Push(Tag{}, "bat")
+	c = c.Push("foo").Push("bar").Push("bat")
 	expected := "foo/bar/bat"
 	actual := c.Path()
 	if actual != expected {
