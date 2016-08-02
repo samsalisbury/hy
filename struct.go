@@ -42,15 +42,16 @@ func (c *Codec) analyseStruct(base NodeBase) (Node, error) {
 		if tag.Ignore {
 			continue
 		}
+		fieldInfo := FieldInfo{Tag: tag, Name: field.Name}
 		if tag.IsDir || field.Type.Kind() == reflect.Struct {
-			child, err := c.analyse(n, field.Type, field.Name)
+			child, err := c.analyse(n, field.Type, fieldInfo)
 			if err != nil {
 				return nil, errors.Wrapf(err, "analysing %T.%s", n.Type, field.Name)
 			}
 			n.Children[field.Name] = child
 			continue
 		}
-		n.Children[field.Name] = NewFileNode(n.Type, field)
+		n.Children[field.Name] = NewFileNode(n.Type, field.Type, fieldInfo)
 	}
 	return n, nil
 }

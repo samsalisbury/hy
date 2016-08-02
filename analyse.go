@@ -44,14 +44,14 @@ func (c *Codec) Analyse(root interface{}) (Node, error) {
 	if root == nil {
 		return nil, errors.New("cannot analyse nil")
 	}
-	n, err := c.analyse(nil, reflect.TypeOf(root), "")
+	n, err := c.analyse(nil, reflect.TypeOf(root), FieldInfo{})
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to analyse %T", root)
 	}
 	return *n, err
 }
 
-func (c *Codec) analyse(parent Node, t reflect.Type, fieldName string) (*Node, error) {
+func (c *Codec) analyse(parent Node, t reflect.Type, field FieldInfo) (*Node, error) {
 	var isPtr bool
 	k := t.Kind()
 	if k == reflect.Ptr {
@@ -67,14 +67,14 @@ func (c *Codec) analyse(parent Node, t reflect.Type, fieldName string) (*Node, e
 		ParentType: parentType,
 		Type:       t,
 		IsPtr:      isPtr,
-		FieldName:  fieldName,
+		FieldName:  field.Name,
 	}
 	n, new := c.Nodes.Register(nodeID)
 	if !new {
 		return n, nil
 	}
 	var err error
-	base := NodeBase{Parent: parent, NodeID: nodeID}
+	base := NodeBase{NodeID: nodeID, Parent: parent, Tag: field.Tag}
 	switch k {
 	default:
 		return nil, errors.Errorf("cannot analyse kind %s", k)

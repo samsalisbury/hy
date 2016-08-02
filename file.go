@@ -8,8 +8,7 @@ type FileNode struct {
 }
 
 // NewFileNode creates a new file node.
-func NewFileNode(parentType reflect.Type, field reflect.StructField) *Node {
-	t := field.Type
+func NewFileNode(parentType, t reflect.Type, field FieldInfo) *Node {
 	var n Node
 	n = &FileNode{
 		NodeBase{
@@ -19,6 +18,7 @@ func NewFileNode(parentType reflect.Type, field reflect.StructField) *Node {
 				IsPtr:      t.Kind() == reflect.Ptr,
 				FieldName:  field.Name,
 			},
+			Tag: field.Tag,
 		},
 	}
 	return &n

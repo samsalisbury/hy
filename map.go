@@ -19,7 +19,7 @@ func (c *Codec) analyseMap(base NodeBase) (Node, error) {
 		},
 	}
 	elemType := n.Type.Elem()
-	elemNode, err := c.analyse(n, elemType, "")
+	elemNode, err := c.analyse(n, elemType, FieldInfo{})
 	if err != nil {
 		return nil, errors.Wrapf(err, "analysing type %T failed", elemType)
 	}
