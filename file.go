@@ -24,7 +24,7 @@ func (n *FileNode) ChildPathName(child Node, key, val reflect.Value) string {
 // WriteTargets returns the write target for this file.
 func (n *FileNode) WriteTargets(c WriteContext, key, val reflect.Value) (FileTargets, error) {
 	fts, err := NewFileTargets(&FileTarget{
-		Path: c.Path(), // path.Join(c.Path(), n.PathName(key, val)),
+		Path: c.Path(),
 		Data: val.Interface(),
 	})
 	return fts, errors.Wrapf(err, "failed making write targets")

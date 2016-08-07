@@ -1,9 +1,6 @@
 package hy
 
-import (
-	"log"
-	"reflect"
-)
+import "reflect"
 
 // NodeBase is a node in an analysis.
 type NodeBase struct {
@@ -32,7 +29,6 @@ func (base NodeBase) PathName(key, val reflect.Value) string {
 	if base.Parent == nil {
 		return ""
 	}
-	log.Printf("PATHNAME DECIDED BY PARENT TYPE: %s", base.Parent)
 	return base.Parent.ChildPathName(*base.self, key, val)
 }
 
