@@ -77,6 +77,8 @@ func NewNodeID(parentType, typ reflect.Type, fieldName string) (NodeID, error) {
 	}
 	switch k {
 	default:
+		// This error does not matter for slice or map elements.
+		// Probably should do something less confusing than returning an error.
 		return nodeID, errors.Errorf("cannot analyse kind %s", k)
 	case reflect.Struct, reflect.Map, reflect.Slice:
 		return nodeID, nil
@@ -90,13 +92,19 @@ func (c *Codec) NewNode(parent Node, id NodeID, tag Tag) (*Node, error) {
 		return n, nil
 	}
 	var err error
-	base := NodeBase{NodeID: id, Parent: parent, Tag: tag, self: n}
 	k := id.Type.Kind()
+	base := NodeBase{NodeID: id, Parent: parent, Tag: tag, self: n}
+	if k == reflect.Struct {
+		*n, err = c.NewStructNode(base)
+		return n, err
+	}
+	if !tag.IsDir {
+		*n = NewFileNode(base)
+		return n, nil
+	}
 	switch k {
 	default:
 		*n = NewFileNode(base)
-	case reflect.Struct:
-		*n, err = c.NewStructNode(base)
 	case reflect.Map:
 		*n, err = c.NewMapNode(base)
 	case reflect.Slice:

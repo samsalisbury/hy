@@ -54,10 +54,7 @@ func (c *Codec) NewStructNode(base NodeBase) (Node, error) {
 
 // ChildPathName returns the path segment for this node's children.
 func (n *StructNode) ChildPathName(child Node, key, val reflect.Value) string {
-	name, ok := child.FixedPathName()
-	if !ok {
-		panic("child of struct must have fixed name")
-	}
+	name, _ := child.FixedPathName()
 	return name
 }
 
@@ -81,12 +78,7 @@ func (n *StructNode) WriteTargets(c WriteContext, key, val reflect.Value) error 
 // WriteSelfTarget writes the struct fields that are not stored in other files.
 func (n *StructNode) WriteSelfTarget(c WriteContext, key, val reflect.Value) error {
 	t := &FileTarget{Path: c.Path(), Data: n.prepareFileData(val)}
-	if t == nil {
-		panic("NO CONTEXT")
-	}
-	err := c.Targets.Add(t)
-
-	return errors.Wrap(err, "failed to write self")
+	return errors.Wrap(c.Targets.Add(t), "failed to write self")
 }
 
 func (n *StructNode) prepareFileData(val reflect.Value) map[string]interface{} {

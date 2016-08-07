@@ -18,6 +18,12 @@ var goodTagTable = map[Tag][]string{
 	Tag{PathName: "mypath", Key: "MyID", SetKey: "SetMyID()"}: {
 		"mypath,MyID,SetMyID()",
 	},
+	Tag{PathName: ".", IsDir: true}: {
+		"./",
+	},
+	Tag{PathName: ".", IsDir: false}: {
+		".",
+	},
 	Tag{PathName: "mypath", IsDir: true}: {
 		"mypath/", "mypath/,", "mypath/,,",
 	},

@@ -11,14 +11,16 @@ type TestWriteStruct struct {
 	Int          int
 	InlineSlice  []string
 	InlineMap    map[string]int
-	IgnoredField string             `hy:"-"`
-	StructFile   StructB            `hy:"a-file"`
-	StringFile   string             `hy:"a-string-file"`
-	Nested       *TestWriteStruct   `hy:"nested"`
-	Slice        []StructB          `hy:"slice/"`
-	NamedSlice2  []StructB          `hy:"a-named-slice/"`
-	Map          map[string]StructB `hy:"map/,Name"`
-	NamedMap     map[string]StructB `hy:"a-named-map/"`
+	IgnoredField string             `hy:"-"`              // not output anywhere
+	StructFile   StructB            `hy:"a-file"`         // a single file
+	StringFile   string             `hy:"a-string-file"`  // a single file
+	SliceFile    []string           `hy:"a-slice-file"`   // a single file
+	MapFile      map[string]string  `hy:"a-map-file"`     // a single file
+	Nested       *TestWriteStruct   `hy:"nested"`         // like a new root
+	Slice        []StructB          `hy:"slice/"`         // file per element
+	NamedSlice2  []StructB          `hy:"a-named-slice/"` // file per element
+	Map          map[string]StructB `hy:"map/"`           // file per element
+	NamedMap     map[string]StructB `hy:"a-named-map/"`   // file per element
 }
 
 var testWriteStructData = TestWriteStruct{
@@ -33,6 +35,10 @@ var testWriteStructData = TestWriteStruct{
 		Int:  2,
 		Slice: []StructB{
 			{Name: "Nested One"}, {Name: "Nested Two"},
+		},
+		Nested: &TestWriteStruct{
+			SliceFile: []string{"this", "is", "a", "slice", "in", "a", "file"},
+			MapFile:   map[string]string{"deeply-nested": "map", "in a file": "yes"},
 		},
 	},
 	Slice: []StructB{{Name: "One"}, {Name: "Two"}},
@@ -85,7 +91,7 @@ func TestNode_WriteTargets_struct(t *testing.T) {
 		t.Fatal(err)
 	}
 	targets := wc.Targets
-	expectedLen := 12
+	expectedLen := 21
 	if targets.Len() != expectedLen {
 		t.Errorf("got len %d; want %d", targets.Len(), expectedLen)
 		for k, ft := range targets.Snapshot() {

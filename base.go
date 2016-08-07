@@ -27,9 +27,6 @@ func (base NodeBase) Write(c WriteContext, key, val reflect.Value) error {
 		}
 		val = val.Elem()
 	}
-	//if reflect.Zero(base.Type) != val {
-	//	return nil
-	//}
 	return (*base.self).WriteTargets(c, key, val)
 }
 
