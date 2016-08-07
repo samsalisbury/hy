@@ -25,6 +25,9 @@ func MakeFileTargets(capacity int) FileTargets {
 }
 
 func (fts FileTargets) add(targets []*FileTarget) (FileTargets, error) {
+	if fts.m == nil {
+		fts.m = make(map[string]*FileTarget, len(targets))
+	}
 	for _, t := range targets {
 		if _, ok := fts.m[t.Path]; ok {
 			return fts, errors.Errorf("duplicate file target %q", t.Path)

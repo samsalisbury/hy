@@ -20,6 +20,19 @@ func (base NodeBase) ID() NodeID {
 	return base.NodeID
 }
 
+func (base NodeBase) Write(c WriteContext, key, val reflect.Value) error {
+	if base.IsPtr {
+		if val.IsNil() {
+			return nil
+		}
+		val = val.Elem()
+	}
+	//if reflect.Zero(base.Type) != val {
+	//	return nil
+	//}
+	return (*base.self).WriteTargets(c, key, val)
+}
+
 // PathName returns the path name segment of this node by querying its tag,
 // field name, and parent's ChildPathName func.
 func (base NodeBase) PathName(key, val reflect.Value) string {

@@ -79,11 +79,12 @@ func TestNode_WriteTargets_struct(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	wc := WriteContext{}
-	targets, err := n.WriteTargets(wc, reflect.Value{}, reflect.ValueOf(testWriteStructData))
-	if err != nil {
+	wc := NewWriteContext()
+	v := reflect.ValueOf(testWriteStructData)
+	if err := n.WriteTargets(wc, reflect.Value{}, v); err != nil {
 		t.Fatal(err)
 	}
+	targets := wc.Targets
 	expectedLen := 12
 	if targets.Len() != expectedLen {
 		t.Errorf("got len %d; want %d", targets.Len(), expectedLen)

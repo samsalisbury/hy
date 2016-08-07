@@ -1,42 +1,26 @@
 package hy
 
-import (
-	"path"
-	"reflect"
-)
-
-// NodeContext provides data about a node passed down by its parent.
-type NodeContext struct {
-	// ParentType is the type containing this node.
-	ParentType reflect.Type
-	// Tag is the tag this context is based on. If ParentType is not a struct,
-	// this will be a zero tag.
-	Tag Tag
-	// FieldName is the name of the field holding this node. If ParentType is
-	// not a struct, FieldName will be empty.
-	FieldName string
-	// KeyField is the name of a field in a map element type that should match
-	// the index in the map.
-	KeyField,
-	// GetKeyFuncName is the name of a function on a map element type that
-	// returns the key of that element in its containing map.
-	GetKeyFuncName,
-	// SetKeyFuncName is the name of a function on a map element type that
-	// is called when that element is added to its containing map.
-	SetKeyFuncName string
-}
+import "path"
 
 // WriteContext is context collected during a write opration.
 type WriteContext struct {
+	// Targets is the collected targets in this write context.
+	Targets FileTargets
 	// Parent is the parent write context.
 	Parent *WriteContext
 	// PathName is the name of this section of the path.
 	PathName string
 }
 
+// NewWriteContext returns a new write context.
+func NewWriteContext() WriteContext {
+	return WriteContext{Targets: MakeFileTargets(0)}
+}
+
 // Push creates a derivative node context.
 func (c WriteContext) Push(pathName string) WriteContext {
 	return WriteContext{
+		Targets:  c.Targets,
 		Parent:   &c,
 		PathName: pathName,
 	}

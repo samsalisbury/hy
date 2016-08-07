@@ -23,7 +23,10 @@ type Node interface {
 
 	// PathName returns the path name of this node. Implemented in NodeBase.
 	PathName(key, val reflect.Value) string
-	// WriteTargets generates the write targets from this node.
-	WriteTargets(c WriteContext, key, val reflect.Value) (FileTargets, error)
+	// WriteTargets writes file targets for this node to the context.
+	WriteTargets(c WriteContext, key, val reflect.Value) error
+	// Write writes file targets for this node to the context by first ensuring
+	// val is not a pointer and then calling WriteTargets.
+	Write(c WriteContext, key, val reflect.Value) error
 	//Read(NodeContext)
 }

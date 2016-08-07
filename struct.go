@@ -62,38 +62,31 @@ func (n *StructNode) ChildPathName(child Node, key, val reflect.Value) string {
 }
 
 // WriteTargets generates file targets.
-func (n *StructNode) WriteTargets(c WriteContext, key, val reflect.Value) (FileTargets, error) {
-	if val.Type().Kind() == reflect.Ptr {
-		if val.IsNil() {
-			return MakeFileTargets(0), nil
-		}
-		val = val.Elem()
-		if !val.IsValid() {
-			return MakeFileTargets(0), nil
-		}
-	}
-	fts := MakeFileTargets(len(n.Children) + 1)
-	if err := fts.Add(&FileTarget{
-		Path: c.Path(),
-		Data: n.prepareFileData(val),
-	},
-	); err != nil {
-		return fts, errors.Wrapf(err, "failed to write self")
+func (n *StructNode) WriteTargets(c WriteContext, key, val reflect.Value) error {
+	if err := n.WriteSelfTarget(c, key, val); err != nil {
+		return errors.Wrap(err, "writing self")
 	}
 	for name, childPtr := range n.Children {
 		childNode := *childPtr
 		childKey := reflect.ValueOf(name)
 		childVal := val.FieldByName(name)
 		childContext := c.Push(childNode.PathName(childKey, childVal))
-		childTargets, err := childNode.WriteTargets(childContext, childKey, childVal)
-		if err != nil {
-			return fts, errors.Wrapf(err, "failed to write child %s", name)
-		}
-		if err := fts.AddAll(childTargets); err != nil {
-			return fts, errors.Wrapf(err, "failed to add targets from child %s", name)
+		if err := childNode.Write(childContext, childKey, childVal); err != nil {
+			return errors.Wrapf(err, "failed to write child %s", name)
 		}
 	}
-	return fts, nil
+	return nil
+}
+
+// WriteSelfTarget writes the struct fields that are not stored in other files.
+func (n *StructNode) WriteSelfTarget(c WriteContext, key, val reflect.Value) error {
+	t := &FileTarget{Path: c.Path(), Data: n.prepareFileData(val)}
+	if t == nil {
+		panic("NO CONTEXT")
+	}
+	err := c.Targets.Add(t)
+
+	return errors.Wrap(err, "failed to write self")
 }
 
 func (n *StructNode) prepareFileData(val reflect.Value) map[string]interface{} {

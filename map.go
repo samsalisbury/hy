@@ -30,19 +30,14 @@ func (n *MapNode) ChildPathName(child Node, key, val reflect.Value) string {
 }
 
 // WriteTargets writes all map elements.
-func (n *MapNode) WriteTargets(c WriteContext, key, val reflect.Value) (FileTargets, error) {
-	fts := MakeFileTargets(val.Len())
+func (n *MapNode) WriteTargets(c WriteContext, key, val reflect.Value) error {
 	elemNode := *n.ElemNode
 	for _, k := range val.MapKeys() {
 		v := val.MapIndex(k)
 		childContext := c.Push(elemNode.PathName(k, v))
-		childTargets, err := elemNode.WriteTargets(childContext, k, v)
-		if err != nil {
-			return fts, errors.Wrapf(err, "writing map index %q failed", fmt.Sprint(k))
-		}
-		if err := fts.AddAll(childTargets); err != nil {
-			return fts, errors.Wrapf(err, "adding children of key %q failed", fmt.Sprint(k))
+		if err := elemNode.Write(childContext, k, v); err != nil {
+			return errors.Wrapf(err, "writing map index %q failed", fmt.Sprint(k))
 		}
 	}
-	return fts, nil
+	return nil
 }
