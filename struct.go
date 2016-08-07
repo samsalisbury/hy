@@ -1,7 +1,6 @@
 package hy
 
 import (
-	"path"
 	"reflect"
 
 	"github.com/pkg/errors"
@@ -73,10 +72,9 @@ func (n *StructNode) WriteTargets(c WriteContext, key, val reflect.Value) (FileT
 			return MakeFileTargets(0), nil
 		}
 	}
-	writePath := path.Join(c.Path(), n.PathName(key, val))
 	fts := MakeFileTargets(len(n.Children) + 1)
 	if err := fts.Add(&FileTarget{
-		Path: writePath,
+		Path: c.Path(),
 		Data: n.prepareFileData(val),
 	},
 	); err != nil {
@@ -84,9 +82,6 @@ func (n *StructNode) WriteTargets(c WriteContext, key, val reflect.Value) (FileT
 	}
 	for name, childPtr := range n.Children {
 		childNode := *childPtr
-		if childNode == nil {
-			panic("NO CHILD NODE OF " + n.ID().String())
-		}
 		childKey := reflect.ValueOf(name)
 		childVal := val.FieldByName(name)
 		childContext := c.Push(childNode.PathName(childKey, childVal))

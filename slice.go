@@ -15,7 +15,7 @@ type SliceNode struct {
 // NewSliceNode makes a new slice node.
 func (c *Codec) NewSliceNode(base NodeBase) (Node, error) {
 	n := &SliceNode{&DirNodeBase{NodeBase: base}}
-	return n, errors.Wrap(n.AnalyseElemNode(c), "analysing slice element node")
+	return n, errors.Wrap(n.AnalyseElemNode(n, c), "analysing slice element node")
 }
 
 // ChildPathName returns the slice index as a string.

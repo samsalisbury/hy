@@ -23,5 +23,9 @@ func (id NodeID) String() string {
 	if id.IsPtr {
 		ptr = "*"
 	}
-	return fmt.Sprintf("%s%s.%s(%s)", ptr, id.ParentType, id.FieldName, id.Type)
+	parent := "nil"
+	if id.ParentType != nil {
+		parent = id.ParentType.String()
+	}
+	return fmt.Sprintf("%s%s.%s(%s)", ptr, parent, id.FieldName, id.Type)
 }

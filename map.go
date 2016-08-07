@@ -21,7 +21,7 @@ func (c *Codec) NewMapNode(base NodeBase) (Node, error) {
 		},
 		KeyType: base.Type.Key(),
 	}
-	return n, errors.Wrap(n.AnalyseElemNode(c), "analysing map element node")
+	return n, errors.Wrap(n.AnalyseElemNode(n, c), "analysing map element node")
 }
 
 // ChildPathName returns the key as a string.
