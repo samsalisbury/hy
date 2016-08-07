@@ -16,8 +16,6 @@ func NewFileNode(base NodeBase) Node {
 	return &FileNode{NodeBase: base}
 }
 
-var nothing = reflect.Value{}
-
 // ChildPathName returns an empty string (file targets don't have children).
 func (n *FileNode) ChildPathName(child Node, key, val reflect.Value) string {
 	return ""

@@ -80,11 +80,11 @@ func TestNode_WriteTargets_struct(t *testing.T) {
 		t.Fatal(err)
 	}
 	wc := WriteContext{}
-	targets, err := n.WriteTargets(wc, nothing, reflect.ValueOf(testWriteStructData))
+	targets, err := n.WriteTargets(wc, reflect.Value{}, reflect.ValueOf(testWriteStructData))
 	if err != nil {
 		t.Fatal(err)
 	}
-	expectedLen := 5
+	expectedLen := 12
 	if targets.Len() != expectedLen {
 		t.Errorf("got len %d; want %d", targets.Len(), expectedLen)
 		for k, ft := range targets.Snapshot() {
