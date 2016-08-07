@@ -1,6 +1,9 @@
 package hy
 
-import "reflect"
+import (
+	"fmt"
+	"reflect"
+)
 
 // NodeID identifies a node in the tree.
 type NodeID struct {
@@ -13,4 +16,12 @@ type NodeID struct {
 	// FieldName is the name of the parent field containing this node. FieldName
 	// will be empty unless ParentType is a struct.
 	FieldName string
+}
+
+func (id NodeID) String() string {
+	ptr := ""
+	if id.IsPtr {
+		ptr = "*"
+	}
+	return fmt.Sprintf("%s%s.%s(%s)", ptr, id.ParentType, id.FieldName, id.Type)
 }

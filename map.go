@@ -9,24 +9,19 @@ import (
 
 // A MapNode represents a map node to be stored in a directory.
 type MapNode struct {
-	DirNodeBase
+	*DirNodeBase
 	KeyType reflect.Type
 }
 
-func (c *Codec) analyseMap(base NodeBase) (Node, error) {
+// NewMapNode makes a new map node.
+func (c *Codec) NewMapNode(base NodeBase) (Node, error) {
 	n := &MapNode{
-		DirNodeBase: DirNodeBase{
+		DirNodeBase: &DirNodeBase{
 			NodeBase: base,
 		},
+		KeyType: base.Type.Key(),
 	}
-	elemType := n.Type.Elem()
-	elemNode, err := c.analyse(n, elemType, FieldInfo{})
-	if err != nil {
-		return nil, errors.Wrapf(err, "analysing type %T failed", elemType)
-	}
-	n.KeyType = n.Type.Key()
-	n.ElemNode = elemNode
-	return n, nil
+	return n, errors.Wrap(n.AnalyseElemNode(c), "analysing map element node")
 }
 
 // ChildPathName returns the key as a string.

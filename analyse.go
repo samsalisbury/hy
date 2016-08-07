@@ -44,46 +44,63 @@ func (c *Codec) Analyse(root interface{}) (Node, error) {
 	if root == nil {
 		return nil, errors.New("cannot analyse nil")
 	}
-	n, err := c.analyse(nil, reflect.TypeOf(root), FieldInfo{})
+	t := reflect.TypeOf(root)
+	id, err := NewNodeID(nil, t, "")
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to analyse %T", root)
+	}
+	n, err := c.NewNode(nil, id, Tag{})
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to analyse %T", root)
 	}
 	return *n, err
 }
 
-func (c *Codec) analyse(parent Node, t reflect.Type, field FieldInfo) (*Node, error) {
+// NewNodeID creates a new node ID.
+func NewNodeID(parentType, typ reflect.Type, fieldName string) (NodeID, error) {
+	t := typ
 	var isPtr bool
 	k := t.Kind()
 	if k == reflect.Ptr {
 		isPtr = true
 		t = t.Elem()
 		k = t.Kind()
-	}
-	var parentType reflect.Type
-	if parent != nil {
-		parentType = parent.ID().Type
+		if k == reflect.Ptr {
+			return NodeID{}, errors.New("cannot analyse pointer to pointer")
+		}
 	}
 	nodeID := NodeID{
 		ParentType: parentType,
 		Type:       t,
 		IsPtr:      isPtr,
-		FieldName:  field.Name,
+		FieldName:  fieldName,
 	}
-	n, new := c.Nodes.Register(nodeID)
+	switch k {
+	default:
+		return nodeID, errors.Errorf("cannot analyse kind %s", k)
+	case reflect.Struct, reflect.Map, reflect.Slice:
+		return nodeID, nil
+	}
+}
+
+// NewNode creates a new node.
+func (c *Codec) NewNode(parent Node, id NodeID, tag Tag) (*Node, error) {
+	n, new := c.Nodes.Register(id)
 	if !new {
 		return n, nil
 	}
 	var err error
-	base := NodeBase{NodeID: nodeID, Parent: parent, Tag: field.Tag, self: n}
+	base := NodeBase{NodeID: id, Parent: parent, Tag: tag, self: n}
+	k := id.Type.Kind()
 	switch k {
 	default:
-		return nil, errors.Errorf("cannot analyse kind %s", k)
+		*n = NewFileNode(base)
 	case reflect.Struct:
-		*n, err = c.analyseStruct(base)
+		*n, err = c.NewStructNode(base)
 	case reflect.Map:
-		*n, err = c.analyseMap(base)
+		*n, err = c.NewMapNode(base)
 	case reflect.Slice:
-		*n, err = c.analyseSlice(base)
+		*n, err = c.NewSliceNode(base)
 	}
-	return n, errors.Wrapf(err, "analysing %s failed", t)
+	return n, errors.Wrapf(err, "analysing %s failed", id)
 }

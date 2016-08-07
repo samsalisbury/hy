@@ -12,6 +12,9 @@ type TestWriteStruct struct {
 	InlineSlice  []string
 	InlineMap    map[string]int
 	IgnoredField string             `hy:"-"`
+	StructFile   StructB            `hy:"a-file"`
+	StringFile   string             `hy:"a-string-file"`
+	Nested       *TestWriteStruct   `hy:"nested"`
 	Slice        []StructB          `hy:"slice/"`
 	NamedSlice2  []StructB          `hy:"a-named-slice/"`
 	Map          map[string]StructB `hy:"map/,Name"`
@@ -23,7 +26,16 @@ var testWriteStructData = TestWriteStruct{
 	Int:         1,
 	InlineSlice: []string{"a", "string", "slice"},
 	InlineMap:   map[string]int{"one": 1, "two": 2, "three": 3},
-	Slice:       []StructB{StructB{Name: "One"}, StructB{Name: "Two"}},
+	StructFile:  StructB{Name: "A file"},
+	StringFile:  "A string in a file.",
+	Nested: &TestWriteStruct{
+		Name: "A nested struct pointer.",
+		Int:  2,
+		Slice: []StructB{
+			{Name: "Nested One"}, {Name: "Nested Two"},
+		},
+	},
+	Slice: []StructB{{Name: "One"}, {Name: "Two"}},
 	Map: map[string]StructB{
 		"First":  StructB{},
 		"Second": StructB{},
@@ -39,22 +51,22 @@ var testWriteFileTargets = map[string]FileTarget{
 			"InlineMap":   map[string]int{"one": 1, "two": 2, "three": 3},
 		},
 	},
-	"Slice/1": FileTarget{
+	"slice/1": FileTarget{
 		Data: map[string]interface{}{
 			"Name": "One",
 		},
 	},
-	"Slice/2": FileTarget{
+	"slice/2": FileTarget{
 		Data: map[string]interface{}{
 			"Name": "Two",
 		},
 	},
-	"Map/First": FileTarget{
+	"map/First": FileTarget{
 		Data: map[string]interface{}{
 			"Name": "First",
 		},
 	},
-	"Map/Second": FileTarget{
+	"map/Second": FileTarget{
 		Data: map[string]interface{}{
 			"Name": "Second",
 		},

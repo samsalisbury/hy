@@ -16,51 +16,8 @@ type StructNode struct {
 	Children map[string]*Node
 }
 
-// ChildPathName returns the path segment for this node's children.
-func (n *StructNode) ChildPathName(child Node, key, val reflect.Value) string {
-	name, ok := child.FixedPathName()
-	if !ok {
-		panic("child of struct must have fixed name")
-	}
-	return name
-}
-
-// WriteTargets generates file targets.
-func (n *StructNode) WriteTargets(c WriteContext, key, val reflect.Value) (FileTargets, error) {
-	writePath := path.Join(c.Path(), n.PathName(key, val))
-	fts := MakeFileTargets(len(n.Children) + 1)
-	if err := fts.Add(&FileTarget{
-		Path: writePath,
-		Data: n.prepareFileData(val),
-	},
-	); err != nil {
-		return fts, errors.Wrapf(err, "failed to write self")
-	}
-	for name, childPtr := range n.Children {
-		childNode := *childPtr
-		childKey := reflect.ValueOf(name)
-		childVal := val.FieldByName(name)
-		childContext := c.Push(childNode.PathName(childKey, childVal))
-		childTargets, err := childNode.WriteTargets(childContext, childKey, childVal)
-		if err != nil {
-			return fts, errors.Wrapf(err, "failed to write child %s", name)
-		}
-		if err := fts.AddAll(childTargets); err != nil {
-			return fts, errors.Wrapf(err, "failed to add targets from child %s", name)
-		}
-	}
-	return fts, nil
-}
-
-func (n *StructNode) prepareFileData(val reflect.Value) map[string]interface{} {
-	out := make(map[string]interface{}, len(n.Fields))
-	for name := range n.Fields {
-		out[name] = val.FieldByName(name).Interface()
-	}
-	return out
-}
-
-func (c *Codec) analyseStruct(base NodeBase) (Node, error) {
+// NewStructNode makes a new struct node.
+func (c *Codec) NewStructNode(base NodeBase) (Node, error) {
 	// Children need a pointer to this node, so create it first.
 	n := &StructNode{
 		FileNode: FileNode{
@@ -84,15 +41,70 @@ func (c *Codec) analyseStruct(base NodeBase) (Node, error) {
 			continue
 		}
 		fieldInfo := FieldInfo{Tag: tag, Name: field.Name}
-		if tag.IsDir || field.Type.Kind() == reflect.Struct {
-			child, err := c.analyse(n, field.Type, fieldInfo)
-			if err != nil {
-				return nil, errors.Wrapf(err, "analysing %T.%s", n.Type, field.Name)
-			}
-			n.Children[field.Name] = child
-			continue
+		childNodeID, _ := NewNodeID(n.Type, field.Type, field.Name)
+		child, err := c.NewNode(n, childNodeID, fieldInfo.Tag)
+		if err != nil {
+			return nil, errors.Wrapf(err, "analysing %T.%s", n.Type, field.Name)
 		}
-		n.Children[field.Name] = NewFileNode(n.Type, field.Type, fieldInfo)
+		if child != nil {
+			n.Children[field.Name] = child
+		}
 	}
 	return n, nil
+}
+
+// ChildPathName returns the path segment for this node's children.
+func (n *StructNode) ChildPathName(child Node, key, val reflect.Value) string {
+	name, ok := child.FixedPathName()
+	if !ok {
+		panic("child of struct must have fixed name")
+	}
+	return name
+}
+
+// WriteTargets generates file targets.
+func (n *StructNode) WriteTargets(c WriteContext, key, val reflect.Value) (FileTargets, error) {
+	if val.Type().Kind() == reflect.Ptr {
+		if val.IsNil() {
+			return MakeFileTargets(0), nil
+		}
+		val = val.Elem()
+		if !val.IsValid() {
+			return MakeFileTargets(0), nil
+		}
+	}
+	writePath := path.Join(c.Path(), n.PathName(key, val))
+	fts := MakeFileTargets(len(n.Children) + 1)
+	if err := fts.Add(&FileTarget{
+		Path: writePath,
+		Data: n.prepareFileData(val),
+	},
+	); err != nil {
+		return fts, errors.Wrapf(err, "failed to write self")
+	}
+	for name, childPtr := range n.Children {
+		childNode := *childPtr
+		if childNode == nil {
+			panic("NO CHILD NODE OF " + n.ID().String())
+		}
+		childKey := reflect.ValueOf(name)
+		childVal := val.FieldByName(name)
+		childContext := c.Push(childNode.PathName(childKey, childVal))
+		childTargets, err := childNode.WriteTargets(childContext, childKey, childVal)
+		if err != nil {
+			return fts, errors.Wrapf(err, "failed to write child %s", name)
+		}
+		if err := fts.AddAll(childTargets); err != nil {
+			return fts, errors.Wrapf(err, "failed to add targets from child %s", name)
+		}
+	}
+	return fts, nil
+}
+
+func (n *StructNode) prepareFileData(val reflect.Value) map[string]interface{} {
+	out := make(map[string]interface{}, len(n.Fields))
+	for name := range n.Fields {
+		out[name] = val.FieldByName(name).Interface()
+	}
+	return out
 }

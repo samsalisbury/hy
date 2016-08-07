@@ -32,11 +32,11 @@ type (
 var nodePtr = new(Node)
 
 var badAnalysesTable = map[string]interface{}{
-	"cannot analyse nil":                                        nil,
-	"failed to analyse int: cannot analyse kind int":            1,
-	"failed to analyse string: cannot analyse kind string":      "",
-	"failed to analyse *hy.Node: cannot analyse kind interface": new(Node),
-	"failed to analyse **hy.Node: cannot analyse kind ptr":      &nodePtr,
+	"cannot analyse nil":                                             nil,
+	"failed to analyse int: cannot analyse kind int":                 1,
+	"failed to analyse string: cannot analyse kind string":           "",
+	"failed to analyse *hy.Node: cannot analyse kind interface":      new(Node),
+	"failed to analyse **hy.Node: cannot analyse pointer to pointer": &nodePtr,
 }
 
 func TestCodec_Analyse_failure(t *testing.T) {
@@ -57,6 +57,7 @@ func TestCodec_Analyse_failure(t *testing.T) {
 var goodAnalysesTable = map[ExpectedStructAnalysis]interface{}{
 	{NumChildren: 5, NumFields: 4}:              StructA{},
 	{NumChildren: 5, NumFields: 4, IsPtr: true}: &StructA{},
+	{NumChildren: 2, NumFields: 1, IsPtr: true}: &StructB{},
 }
 
 func TestCodec_Analyse_struct_success(t *testing.T) {
@@ -104,6 +105,12 @@ func TestCodec_Analyse_mapNode(t *testing.T) {
 		t.Errorf("got key type %s; want %s", mapNode.KeyType, stringType)
 	}
 	structBType := reflect.TypeOf(StructB{})
+	if mapNode == nil {
+		t.Fatalf("got nil; want Node")
+	}
+	if (mapNode.ElemNode) == nil {
+		t.Fatalf("element node is nil at %s", mapNode.ID())
+	}
 	elemType := (*mapNode.ElemNode).ID().Type
 	if elemType != structBType {
 		t.Errorf("got elem type %s; want %s", elemType, structBType)
