@@ -57,6 +57,8 @@ func (c *Codec) Analyse(root interface{}) (Node, error) {
 }
 
 // NewNodeID creates a new node ID.
+// TODO: This function is problematic. Sometimes its error matters and sometimes
+// not, see below. This needs to be fixed.
 func NewNodeID(parentType, typ reflect.Type, fieldName string) (NodeID, error) {
 	t := typ
 	var isPtr bool
@@ -66,6 +68,7 @@ func NewNodeID(parentType, typ reflect.Type, fieldName string) (NodeID, error) {
 		t = t.Elem()
 		k = t.Kind()
 		if k == reflect.Ptr {
+			// This error always matters.
 			return NodeID{}, errors.New("cannot analyse pointer to pointer")
 		}
 	}

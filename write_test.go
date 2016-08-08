@@ -11,16 +11,17 @@ type TestWriteStruct struct {
 	Int          int
 	InlineSlice  []string
 	InlineMap    map[string]int
-	IgnoredField string             `hy:"-"`              // not output anywhere
-	StructFile   StructB            `hy:"a-file"`         // a single file
-	StringFile   string             `hy:"a-string-file"`  // a single file
-	SliceFile    []string           `hy:"a-slice-file"`   // a single file
-	MapFile      map[string]string  `hy:"a-map-file"`     // a single file
-	Nested       *TestWriteStruct   `hy:"nested"`         // like a new root
-	Slice        []StructB          `hy:"slice/"`         // file per element
-	NamedSlice2  []StructB          `hy:"a-named-slice/"` // file per element
-	Map          map[string]StructB `hy:"map/"`           // file per element
-	NamedMap     map[string]StructB `hy:"a-named-map/"`   // file per element
+	IgnoredField string                       `hy:"-"`              // not output anywhere
+	StructFile   StructB                      `hy:"a-file"`         // a single file
+	StringFile   string                       `hy:"a-string-file"`  // a single file
+	SliceFile    []string                     `hy:"a-slice-file"`   // a single file
+	MapFile      map[string]string            `hy:"a-map-file"`     // a single file
+	Nested       *TestWriteStruct             `hy:"nested"`         // like a new root
+	Slice        []StructB                    `hy:"slice/"`         // file per element
+	NamedSlice2  []StructB                    `hy:"a-named-slice/"` // file per element
+	Map          map[string]StructB           `hy:"map/"`           // file per element
+	NamedMap     map[string]StructB           `hy:"a-named-map/"`   // file per element
+	MapOfMap     map[string]map[string]string `hy:"complex-map/"`   // file per element
 }
 
 var testWriteStructData = TestWriteStruct{
@@ -78,6 +79,33 @@ var testWriteFileTargets = map[string]FileTarget{
 		},
 	},
 }
+
+// TODO:
+//   - Eliminate zero-valued files by default.
+//   - Use default path names for "." and "./" tags.
+//   - Add options for default path names:
+//     - lowerCamelCase
+//     - CamelCase
+//     - snake-case
+//     - underscores_only
+//     - lowercase
+//     - UPPERCASE
+//   - Respect JSON tags for field names.
+//   - Respect YAML tags for field names?
+//   - Add support for reading FileTargets.
+//   - Add support for auto-filling ID fields in map/slice elements on read.
+//     - Default field:  ID string
+//     - Default getter: ID() string
+//     - Default setter: SetID(string)
+//   - On write, need to pick:
+//     - Fail if ID field not matching key or index?
+//     - Overwrite ID with current key or index?
+//     - Elide ID field from output altogether? (This should be the default, so
+//       it only matters in memory.)
+//     - Other?
+//   - Add support for writing special maps with default fields/methods:
+//   - Add support for writing actual files with a marshaller.
+//   - Add support for reading actual files with a marshaller.
 
 func TestNode_WriteTargets_struct(t *testing.T) {
 	c := NewCodec()
