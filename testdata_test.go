@@ -54,11 +54,6 @@ var expectedWriteFileTargets = map[string]FileTarget{
 	"nested/nested/a-map-file": FileTarget{
 		Data: map[string]string{"deeply-nested": "map", "in a file": "yes"},
 	},
-	"nested/struct": FileTarget{
-		Data: map[string]interface{}{
-			"Name": "Struct B file",
-		},
-	},
 	"nested/map-of-ptr/a-nil-file":       FileTarget{Data: nil},
 	"nested/map-of-ptr/another-nil-file": FileTarget{Data: nil},
 	"nested/map-of-ptr/this-one-has-a-value": FileTarget{

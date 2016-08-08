@@ -50,10 +50,8 @@ func (base NodeBase) Write(c WriteContext, key, val reflect.Value) error {
 	if base.IsPtr {
 		val = val.Elem()
 	}
-	if !base.HasKey && !val.IsValid() {
-		return nil
-	}
-	if !base.HasKey && reflect.DeepEqual(val.Interface(), base.Zero) {
+	if !base.HasKey &&
+		(!val.IsValid() || reflect.DeepEqual(val.Interface(), base.Zero)) {
 		return nil
 	}
 	return (*base.self).WriteTargets(c, key, val)

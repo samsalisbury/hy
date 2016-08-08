@@ -114,8 +114,30 @@ func TestNode_Write_struct(t *testing.T) {
 			t.Errorf("extra file generated at %s:\n%s", fileName, actual.TestDump())
 			continue
 		}
-		if (actual.Data != nil && expected.Data != nil) && actual.TestDataDump() != expected.TestDataDump() {
-			t.Errorf("\ngot:\n%s\nwant:\n%s\n", actual.TestDump(), expected.TestDump())
+		if actual.Data == nil && expected.Data == nil {
+			continue
+		}
+		var actualType, expectedType reflect.Type
+		if actual.Data != nil {
+			actualType = reflect.ValueOf(actual.Data).Type()
+			if expected.Data == nil {
+				t.Errorf("at %q got: %v; want nil", fileName, actual.Data)
+			}
+		}
+		if expected.Data != nil {
+			expectedType = reflect.ValueOf(expected.Data).Type()
+			if actual.Data == nil {
+				t.Errorf("at %q got: nil; want:\n%v", fileName, expected.Data)
+			}
+		}
+
+		if actualType != expectedType {
+			t.Errorf("got type %s; want %s at %q", actualType, expectedType, fileName)
+			t.Errorf("values: got:\n%# v\nwant:\n%# v", actual.Data, expected.Data)
+		}
+		if actual.TestDataDump() != expected.TestDataDump() {
+			t.Errorf("\ngot rendered data:\n%s\nwant:\n%s\n",
+				actual.TestDump(), expected.TestDump())
 		}
 	}
 	for fileName := range expectedWriteFileTargets {

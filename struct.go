@@ -88,7 +88,7 @@ func (n *StructNode) WriteSelfTarget(c WriteContext, key, val reflect.Value) err
 	return errors.Wrap(c.Targets.Add(t), "failed to write self")
 }
 
-func (n *StructNode) prepareFileData(val reflect.Value) map[string]interface{} {
+func (n *StructNode) prepareFileData(val reflect.Value) interface{} {
 	if !val.IsValid() {
 		return nil
 	}
