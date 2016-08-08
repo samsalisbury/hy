@@ -2,26 +2,27 @@ package hy
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"testing"
 )
 
 type TestWriteStruct struct {
-	Name         string
-	Int          int
-	InlineSlice  []string
-	InlineMap    map[string]int
-	IgnoredField string                       `hy:"-"`              // not output anywhere
-	StructFile   StructB                      `hy:"a-file"`         // a single file
-	StringFile   string                       `hy:"a-string-file"`  // a single file
-	SliceFile    []string                     `hy:"a-slice-file"`   // a single file
-	MapFile      map[string]string            `hy:"a-map-file"`     // a single file
-	Nested       *TestWriteStruct             `hy:"nested"`         // like a new root
-	Slice        []StructB                    `hy:"slice/"`         // file per element
-	NamedSlice2  []StructB                    `hy:"a-named-slice/"` // file per element
-	Map          map[string]StructB           `hy:"map/"`           // file per element
-	MapOfPtr     map[string]*StructB          `hy:"map-of-ptr/"`    // file per element
-	MapOfMap     map[string]map[string]string `hy:"complex-map/"`   // file per element
+	Name         string              // regular field
+	Int          int                 // regular field
+	InlineSlice  []string            // regular field
+	InlineMap    map[string]int      // regular field
+	StructB      StructB             // regular field
+	StructBPtr   *StructB            // regular field
+	IgnoredField string              `hy:"-"`             // not output anywhere
+	StructFile   StructB             `hy:"a-file"`        // a single file
+	StringFile   string              `hy:"a-string-file"` // a single file
+	SliceFile    []string            `hy:"a-slice-file"`  // a single file
+	MapFile      map[string]string   `hy:"a-map-file"`    // a single file
+	Nested       *TestWriteStruct    `hy:"nested"`        // like a new root
+	Slice        []StructB           `hy:"slice/"`        // file per element
+	Map          map[string]StructB  `hy:"map/"`          // file per element
+	MapOfPtr     map[string]*StructB `hy:"map-of-ptr/"`   // file per element
 }
 
 var testWriteStructData = TestWriteStruct{
@@ -57,39 +58,10 @@ var testWriteStructData = TestWriteStruct{
 	},
 	Slice: []StructB{{Name: "One"}, {Name: "Two"}},
 	Map: map[string]StructB{
+		// Notice how we don't set the Name field here. Hy sets it in the write
+		// data because of the ",Name" tag.
 		"First":  StructB{},
 		"Second": StructB{},
-	},
-}
-
-var testWriteFileTargets = map[string]FileTarget{
-	"TestWriteStruct": FileTarget{
-		Data: map[string]interface{}{
-			"Name":        "Test struct writing",
-			"Int":         1,
-			"InlineSlice": []string{"a", "string", "slice"},
-			"InlineMap":   map[string]int{"one": 1, "two": 2, "three": 3},
-		},
-	},
-	"slice/1": FileTarget{
-		Data: map[string]interface{}{
-			"Name": "One",
-		},
-	},
-	"slice/2": FileTarget{
-		Data: map[string]interface{}{
-			"Name": "Two",
-		},
-	},
-	"map/First": FileTarget{
-		Data: map[string]interface{}{
-			"Name": "First",
-		},
-	},
-	"map/Second": FileTarget{
-		Data: map[string]interface{}{
-			"Name": "Second",
-		},
 	},
 }
 
@@ -134,38 +106,33 @@ func TestNode_Write_struct(t *testing.T) {
 	expectedLen := 20
 	if targets.Len() != expectedLen {
 		t.Errorf("got len %d; want %d", targets.Len(), expectedLen)
-		for k, ft := range targets.Snapshot() {
-			data, err := json.MarshalIndent(ft.Data, "  ", "  ")
-			if err != nil {
-				t.Fatal(err)
-			}
-			t.Logf("file: %s\n%s\n", k, data)
+	}
+	actualTargets := targets.Snapshot()
+	for fileName, actual := range actualTargets {
+		expected, ok := expectedWriteFileTargets[fileName]
+		if !ok {
+			t.Errorf("extra file generated at %s:\n%s", fileName, actual.TestDump())
+			continue
+		}
+		if (actual.Data != nil && expected.Data != nil) && actual.TestDataDump() != expected.TestDataDump() {
+			t.Errorf("\ngot:\n%s\nwant:\n%s\n", actual.TestDump(), expected.TestDump())
+		}
+	}
+	for fileName := range expectedWriteFileTargets {
+		if _, ok := actualTargets[fileName]; !ok {
+			t.Errorf("missing file %q", fileName)
 		}
 	}
 }
 
-var testWriteFS = `
-file: TestWriteStruct.yaml
-Name: Test struct writing
-Int: 1
-InlineSlice:
-	- a
-	- string
-	- slice
-InlineMap:
-	one: 1
-	two: 2
-	three: 3
+func (ft FileTarget) TestDump() string {
+	return fmt.Sprintf("file: %q\n%s\n", ft.Path, ft.TestDataDump())
+}
 
-file: Slice/1.yaml
-Name: One
-
-file: Slice/2.yaml
-Name: Two
-
-file: Map/First.yaml
-Name: First
-
-file: Map/Second.yaml
-Name: Second
-`
+func (ft FileTarget) TestDataDump() string {
+	data, err := json.MarshalIndent(ft.Data, "  ", "  ")
+	if err != nil {
+		panic(err)
+	}
+	return string(data)
+}
