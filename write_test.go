@@ -20,7 +20,7 @@ type TestWriteStruct struct {
 	Slice        []StructB                    `hy:"slice/"`         // file per element
 	NamedSlice2  []StructB                    `hy:"a-named-slice/"` // file per element
 	Map          map[string]StructB           `hy:"map/"`           // file per element
-	NamedMap     map[string]StructB           `hy:"a-named-map/"`   // file per element
+	MapOfPtr     map[string]*StructB          `hy:"map-of-ptr/"`    // file per element
 	MapOfMap     map[string]map[string]string `hy:"complex-map/"`   // file per element
 }
 
@@ -40,6 +40,19 @@ var testWriteStructData = TestWriteStruct{
 		Nested: &TestWriteStruct{
 			SliceFile: []string{"this", "is", "a", "slice", "in", "a", "file"},
 			MapFile:   map[string]string{"deeply-nested": "map", "in a file": "yes"},
+		},
+		StructFile: StructB{
+			Name: "Struct B file",
+		},
+		MapOfPtr: map[string]*StructB{
+			"a-nil-file":           nil,
+			"another-nil-file":     nil,
+			"this-one-has-a-value": &StructB{},
+		},
+		Map: map[string]StructB{
+			"a-zero-file":       StructB{},
+			"another-zero-file": StructB{},
+			"nonzero-file":      StructB{Name: "I am not zero."},
 		},
 	},
 	Slice: []StructB{{Name: "One"}, {Name: "Two"}},
@@ -81,7 +94,6 @@ var testWriteFileTargets = map[string]FileTarget{
 }
 
 // TODO:
-//   - Eliminate zero-valued files by default.
 //   - Use default path names for "." and "./" tags.
 //   - Add options for default path names:
 //     - lowerCamelCase
@@ -107,7 +119,7 @@ var testWriteFileTargets = map[string]FileTarget{
 //   - Add support for writing actual files with a marshaller.
 //   - Add support for reading actual files with a marshaller.
 
-func TestNode_WriteTargets_struct(t *testing.T) {
+func TestNode_Write_struct(t *testing.T) {
 	c := NewCodec()
 	n, err := c.Analyse(TestWriteStruct{})
 	if err != nil {
@@ -115,11 +127,11 @@ func TestNode_WriteTargets_struct(t *testing.T) {
 	}
 	wc := NewWriteContext()
 	v := reflect.ValueOf(testWriteStructData)
-	if err := n.WriteTargets(wc, reflect.Value{}, v); err != nil {
+	if err := n.Write(wc, reflect.Value{}, v); err != nil {
 		t.Fatal(err)
 	}
 	targets := wc.Targets
-	expectedLen := 21
+	expectedLen := 20
 	if targets.Len() != expectedLen {
 		t.Errorf("got len %d; want %d", targets.Len(), expectedLen)
 		for k, ft := range targets.Snapshot() {

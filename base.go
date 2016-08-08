@@ -9,9 +9,15 @@ type NodeBase struct {
 	Parent Node
 	// Tag is the struct tag applying to this node.
 	Tag Tag
+	// Zero is a zero value of this node's Type.
+	Zero interface{}
+	// HasKey indicates if this type has a key (e.g. maps and slices)
+	HasKey bool
 	// self is a pointer to the node based on this node base. This means more
 	// common functionality can be handled by NodeBase, by allowing it to call
 	// methods on it's differentiated self.
+	//
+	// self is only safe to use after analysis is complete.
 	self *Node
 }
 
@@ -20,12 +26,35 @@ func (base NodeBase) ID() NodeID {
 	return base.NodeID
 }
 
+// NewNodeBase returns a new NodeBase.
+func NewNodeBase(id NodeID, parent Node, tag Tag, self *Node) NodeBase {
+	var k reflect.Kind
+	if parent != nil {
+		k = parent.ID().Type.Kind()
+	}
+	var zero interface{}
+	if !id.IsPtr {
+		zero = reflect.Zero(id.Type).Interface()
+	}
+	return NodeBase{
+		NodeID: id,
+		Parent: parent,
+		Tag:    tag,
+		Zero:   zero,
+		HasKey: k == reflect.Map || k == reflect.Slice,
+		self:   self,
+	}
+}
+
 func (base NodeBase) Write(c WriteContext, key, val reflect.Value) error {
 	if base.IsPtr {
-		if val.IsNil() {
-			return nil
-		}
 		val = val.Elem()
+	}
+	if !base.HasKey && !val.IsValid() {
+		return nil
+	}
+	if !base.HasKey && reflect.DeepEqual(val.Interface(), base.Zero) {
+		return nil
 	}
 	return (*base.self).WriteTargets(c, key, val)
 }

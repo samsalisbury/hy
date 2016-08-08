@@ -68,7 +68,7 @@ func (c *Codec) NewNode(parent Node, id NodeID, tag Tag) (*Node, error) {
 	}
 	var err error
 	k := id.Type.Kind()
-	base := NodeBase{NodeID: id, Parent: parent, Tag: tag, self: n}
+	base := NewNodeBase(id, parent, tag, n)
 	if k == reflect.Struct {
 		*n, err = c.NewStructNode(base)
 		return n, err

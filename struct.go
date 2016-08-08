@@ -66,6 +66,9 @@ func (n *StructNode) WriteTargets(c WriteContext, key, val reflect.Value) error 
 	if err := n.WriteSelfTarget(c, key, val); err != nil {
 		return errors.Wrap(err, "writing self")
 	}
+	if !val.IsValid() {
+		return nil
+	}
 	for name, childPtr := range n.Children {
 		childNode := *childPtr
 		childKey := reflect.ValueOf(name)
@@ -80,11 +83,15 @@ func (n *StructNode) WriteTargets(c WriteContext, key, val reflect.Value) error 
 
 // WriteSelfTarget writes the struct fields that are not stored in other files.
 func (n *StructNode) WriteSelfTarget(c WriteContext, key, val reflect.Value) error {
-	t := &FileTarget{Path: c.Path(), Data: n.prepareFileData(val)}
+	data := n.prepareFileData(val)
+	t := &FileTarget{Path: c.Path(), Data: data}
 	return errors.Wrap(c.Targets.Add(t), "failed to write self")
 }
 
 func (n *StructNode) prepareFileData(val reflect.Value) map[string]interface{} {
+	if !val.IsValid() {
+		return nil
+	}
 	out := make(map[string]interface{}, len(n.Fields))
 	for name := range n.Fields {
 		out[name] = val.FieldByName(name).Interface()
