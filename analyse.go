@@ -49,43 +49,15 @@ func (c *Codec) Analyse(root interface{}) (Node, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to analyse %T", root)
 	}
+	if id.IsLeaf {
+		return nil, errors.Errorf("failed to analyse %s: cannot analyse kind %s",
+			id.Type, id.Type.Kind())
+	}
 	n, err := c.NewNode(nil, id, Tag{})
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to analyse %T", root)
 	}
 	return *n, err
-}
-
-// NewNodeID creates a new node ID.
-// TODO: This function is problematic. Sometimes its error matters and sometimes
-// not, see below. This needs to be fixed.
-func NewNodeID(parentType, typ reflect.Type, fieldName string) (NodeID, error) {
-	t := typ
-	var isPtr bool
-	k := t.Kind()
-	if k == reflect.Ptr {
-		isPtr = true
-		t = t.Elem()
-		k = t.Kind()
-		if k == reflect.Ptr {
-			// This error always matters.
-			return NodeID{}, errors.New("cannot analyse pointer to pointer")
-		}
-	}
-	nodeID := NodeID{
-		ParentType: parentType,
-		Type:       t,
-		IsPtr:      isPtr,
-		FieldName:  fieldName,
-	}
-	switch k {
-	default:
-		// This error does not matter for slice or map elements.
-		// Probably should do something less confusing than returning an error.
-		return nodeID, errors.Errorf("cannot analyse kind %s", k)
-	case reflect.Struct, reflect.Map, reflect.Slice:
-		return nodeID, nil
-	}
 }
 
 // NewNode creates a new node.
@@ -101,7 +73,7 @@ func (c *Codec) NewNode(parent Node, id NodeID, tag Tag) (*Node, error) {
 		*n, err = c.NewStructNode(base)
 		return n, err
 	}
-	if !tag.IsDir {
+	if id.IsLeaf || !tag.IsDir {
 		*n = NewFileNode(base)
 		return n, nil
 	}
