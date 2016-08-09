@@ -19,10 +19,10 @@ var goodTagTable = map[Tag][]string{
 		"mypath,MyID,SetMyID()",
 	},
 	Tag{PathName: ".", IsDir: true}: {
-		"./",
+		"./", "/",
 	},
 	Tag{PathName: ".", IsDir: false}: {
-		".",
+		".", ",",
 	},
 	Tag{PathName: "mypath", IsDir: true}: {
 		"mypath/", "mypath/,", "mypath/,,",
@@ -51,7 +51,6 @@ func TestParseTag_success(t *testing.T) {
 
 var badTagTable = map[string][]string{
 	"malformed tag, too many commas":                     {",,,", "mypath,key,setkey,"},
-	"name must not be empty":                             {",", ",,", ",key", ",key,", ",key,setkey"},
 	`path name "/mypath" invalid: must not begin with /`: {"/mypath", "/mypath,", "/mypath,,"},
 }
 

@@ -37,9 +37,6 @@ func parseTag(tagString string) (Tag, error) {
 	if pathName == "-" {
 		return Tag{Ignore: true}, nil
 	}
-	if pathName == "" {
-		return Tag{}, errors.Errorf("name must not be empty")
-	}
 	pathName, isDir, err := parsePathName(pathName)
 	if err != nil {
 		return Tag{}, errors.Wrapf(err, "path name %q invalid", pathName)
@@ -53,6 +50,12 @@ func parseTag(tagString string) (Tag, error) {
 }
 
 func parsePathName(pathName string) (string, bool, error) {
+	if pathName == "" {
+		return ".", false, nil
+	}
+	if pathName == "/" {
+		return ".", true, nil
+	}
 	if strings.HasPrefix(pathName, "/") {
 		return pathName, false, errors.Errorf("must not begin with /")
 	}

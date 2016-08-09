@@ -17,6 +17,10 @@ type FieldInfoTestStruct struct {
 	NoTag1 *A ``      // IsField
 	NoTag2 *A `hy:""` // IsField
 
+	// ignore
+	Ignore1 *A `hy:"-"`   // Ignore
+	Ignore2 *A `json:"-"` // Ignore
+
 	// hy path tags
 	FileTag      *A `hy:"some-path1"`  // PathName = "some-path1"
 	DirTag       *A `hy:"some-path2/"` // IsDir + PathName  = "some-path2"
@@ -25,9 +29,11 @@ type FieldInfoTestStruct struct {
 	AutoDirTag1  *A `hy:"/"`           // AutoPathName + IsDir
 
 	// json tags
-	JSONNameTag          *A `json:"jsonName1"`           // IsField +             FieldName = jsonName1
-	JSONOmitEmptyTag     *A `json:",omitempty"`          // IsField + OmitEmpty
-	JSONNameOmitEmptyTag *A `json:"jsonName2,omitempty"` // IsField + OmitEmpty + FieldName = jsonName2
+	JSONName          *A  `json:"jsonName1"`           // IsField +             FieldName = jsonName1
+	JSONOmitEmpty     *A  `json:",omitempty"`          // IsField + OmitEmpty + AutoFieldName
+	JSONNameOmitEmpty *A  `json:"jsonName2,omitempty"` // IsField + OmitEmpty + FieldName = jsonName2
+	JSONIntString     int `json:",string"`             // IsField + IsString  + AutoFieldName
+	JSONIntStringOmit int `json:",string,omitempty"`   // IsField + IsString  + AutoFieldName
 
 	// hy path tags + json tags
 	FileTagWithJSON *A `hy:"some-path3" json:"x"`  // PathName  = "some-path3"
@@ -58,12 +64,12 @@ var fieldInfoGoodCalls = map[string]FieldInfo{
 	"AutoFileTag2": {AutoPathName: true},
 	"AutoDirTag1":  {AutoPathName: true, IsDir: true},
 
-	"JSONNameTag":          {IsField: true, FieldName: "jsonName1"},
-	"JSONOmitEmptyTag":     {IsField: true, AutoFieldName: true, OmitEmpty: true},
-	"JSONNameOmitEmptyTag": {IsField: true, FieldName: "jsonName2", OmitEmpty: true},
+	"JSONName":          {IsField: true, FieldName: "jsonName1"},
+	"JSONOmitEmpty":     {IsField: true, AutoFieldName: true, OmitEmpty: true},
+	"JSONNameOmitEmpty": {IsField: true, FieldName: "jsonName2", OmitEmpty: true},
 
 	"FileTagWithJSON": {PathName: "some-path3"},
-	"DirTagWithJSON":  {PathName: "some-path4", OmitEmpty: true},
+	"DirTagWithJSON":  {PathName: "some-path4", IsDir: true},
 
 	"KeyFieldTag1": {AutoPathName: true, KeyField: "Name", IsDir: true},
 	"KeyFieldTag2": {AutoPathName: true, KeyField: "Name"},
@@ -87,7 +93,8 @@ func TestNewFieldInfo(t *testing.T) {
 		actualVal := reflect.ValueOf(actual).Elem()
 		expectedVal := reflect.ValueOf(expected)
 		// check bool fields
-		for _, f := range []string{"IsField", "IsDir", "AutoPathName", "OmitEmpty", "AutoFieldName"} {
+		for _, f := range []string{
+			"Ignore", "IsField", "IsDir", "AutoPathName", "OmitEmpty", "AutoFieldName"} {
 			actualBool := actualVal.FieldByName(f).Bool()
 			expectedBool := expectedVal.FieldByName(f).Bool()
 			if actualBool != expectedBool {
@@ -100,7 +107,8 @@ func TestNewFieldInfo(t *testing.T) {
 			}
 		}
 		// check string fields
-		for _, f := range []string{"Name", "FieldName", "PathName", "KeyField"} {
+		for _, f := range []string{
+			"FieldName", "PathName", "KeyField", "GetKeyName", "SetKeyName"} {
 			actualString := actualVal.FieldByName(f).Interface().(string)
 			expectedString := expectedVal.FieldByName(f).Interface().(string)
 			if actualString != expectedString {
