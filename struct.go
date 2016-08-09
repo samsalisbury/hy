@@ -26,25 +26,22 @@ func (c *Codec) NewStructNode(base NodeBase) (Node, error) {
 		Children: map[string]*Node{},
 	}
 	for i := 0; i < n.Type.NumField(); i++ {
-		field := n.Type.Field(i)
-		tagStr := field.Tag.Get("hy")
-		tag, err := parseTag(tagStr)
+		field, err := NewFieldInfo(n.Type.Field(i)) //tag, Name: field.Name)
 		if err != nil {
-			return nil, errors.Wrapf(err, "invalid tag %q", tagStr)
+			return nil, errors.Wrapf(err, "reading field %s.%s", n.Type, n.Type.Field(i).Name)
 		}
-		if tag.None {
+		if field.Tag.None {
 			n.Fields[field.Name] = field.Type
 			continue
 		}
-		if tag.Ignore {
+		if field.Tag.Ignore {
 			continue
 		}
-		fieldInfo := FieldInfo{Tag: tag, Name: field.Name}
 		childNodeID, err := NewNodeID(n.Type, field.Type, field.Name)
 		if err != nil {
 			return nil, errors.Wrapf(err, "getting ID for %T.%s", n.Type, field.Name)
 		}
-		child, err := c.NewNode(n, childNodeID, fieldInfo.Tag)
+		child, err := c.NewNode(n, childNodeID, field.Tag)
 		if err != nil {
 			return nil, errors.Wrapf(err, "analysing %T.%s", n.Type, field.Name)
 		}
