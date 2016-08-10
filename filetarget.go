@@ -4,9 +4,15 @@ import "github.com/pkg/errors"
 
 // FileTarget represents a target file to be written.
 type FileTarget struct {
-	Path string
-	Data interface{}
+	FilePath string
+	Value    interface{}
 }
+
+// Path returns FilePath.
+func (ft FileTarget) Path() string { return ft.FilePath }
+
+// Data returns the Value.
+func (ft FileTarget) Data() interface{} { return ft.Value }
 
 // FileTargets is a map of file targets.
 type FileTargets struct {
@@ -29,10 +35,10 @@ func (fts FileTargets) add(targets []*FileTarget) (FileTargets, error) {
 		fts.m = make(map[string]*FileTarget, len(targets))
 	}
 	for _, t := range targets {
-		if _, ok := fts.m[t.Path]; ok {
-			return fts, errors.Errorf("duplicate file target %q", t.Path)
+		if _, ok := fts.m[t.FilePath]; ok {
+			return fts, errors.Errorf("duplicate file target %q", t.FilePath)
 		}
-		fts.m[t.Path] = t
+		fts.m[t.FilePath] = t
 	}
 	return fts, nil
 }

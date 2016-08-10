@@ -81,7 +81,7 @@ func (n *StructNode) WriteTargets(c WriteContext, key, val reflect.Value) error 
 // WriteSelfTarget writes the struct fields that are not stored in other files.
 func (n *StructNode) WriteSelfTarget(c WriteContext, key, val reflect.Value) error {
 	data := n.prepareFileData(val)
-	t := &FileTarget{Path: c.Path(), Data: data}
+	t := &FileTarget{FilePath: c.Path(), Value: data}
 	return errors.Wrap(c.Targets.Add(t), "failed to write self")
 }
 

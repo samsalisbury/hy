@@ -115,26 +115,26 @@ func TestNode_Write_struct(t *testing.T) {
 			t.Errorf("extra file generated at %s:\n%s", fileName, actual.TestDump())
 			continue
 		}
-		if actual.Data == nil && expected.Data == nil {
+		if actual.Value == nil && expected.Value == nil {
 			continue
 		}
 		var actualType, expectedType reflect.Type
-		if actual.Data != nil {
-			actualType = reflect.ValueOf(actual.Data).Type()
-			if expected.Data == nil {
-				t.Errorf("at %q got: %v; want nil", fileName, actual.Data)
+		if actual.Value != nil {
+			actualType = reflect.ValueOf(actual.Value).Type()
+			if expected.Value == nil {
+				t.Errorf("at %q got: %v; want nil", fileName, actual.Value)
 			}
 		}
-		if expected.Data != nil {
-			expectedType = reflect.ValueOf(expected.Data).Type()
-			if actual.Data == nil {
-				t.Errorf("at %q got: nil; want:\n%v", fileName, expected.Data)
+		if expected.Value != nil {
+			expectedType = reflect.ValueOf(expected.Value).Type()
+			if actual.Value == nil {
+				t.Errorf("at %q got: nil; want:\n%v", fileName, expected.Value)
 			}
 		}
 
 		if actualType != expectedType {
 			t.Errorf("got type %s; want %s at %q", actualType, expectedType, fileName)
-			t.Errorf("values: got:\n%# v\nwant:\n%# v", actual.Data, expected.Data)
+			t.Errorf("values: got:\n%# v\nwant:\n%# v", actual.Value, expected.Value)
 		}
 		if actual.TestDataDump() != expected.TestDataDump() {
 			t.Errorf("\ngot rendered data:\n%s\nwant:\n%s\n",
@@ -149,11 +149,11 @@ func TestNode_Write_struct(t *testing.T) {
 }
 
 func (ft FileTarget) TestDump() string {
-	return fmt.Sprintf("file: %q\n%s\n", ft.Path, ft.TestDataDump())
+	return fmt.Sprintf("file: %q\n%s\n", ft.FilePath, ft.TestDataDump())
 }
 
 func (ft FileTarget) TestDataDump() string {
-	data, err := json.MarshalIndent(ft.Data, "  ", "  ")
+	data, err := json.MarshalIndent(ft.Value, "  ", "  ")
 	if err != nil {
 		panic(err)
 	}

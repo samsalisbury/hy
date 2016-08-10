@@ -8,12 +8,38 @@ import (
 
 // Codec provides the primary encoding and decoding facility of this package.
 type Codec struct {
-	Nodes NodeSet
+	nodes  NodeSet
+	Writer FileWriter
 }
 
 // NewCodec creates a new codec.
-func NewCodec() *Codec {
-	return &Codec{Nodes: NewNodeSet()}
+func NewCodec(configure ...func(*Codec)) *Codec {
+	c := &Codec{nodes: NewNodeSet()}
+	for _, cfg := range configure {
+		cfg(c)
+	}
+	if c.Writer == nil {
+		c.Writer = JSONWriter
+	}
+	return c
+}
+
+func (c *Codec) Write(root interface{}) error {
+	rootNode, err := c.Analyse(root)
+	if err != nil {
+		return errors.Wrapf(err, "analysing structure")
+	}
+	wc := NewWriteContext()
+	v := reflect.ValueOf(root)
+	if err := rootNode.Write(wc, reflect.Value{}, v); err != nil {
+		return errors.Wrapf(err, "generating write targets")
+	}
+	for _, t := range wc.Targets.Snapshot() {
+		if err := c.Writer.WriteFile(t); err != nil {
+			return errors.Wrapf(err, "writing target %q", t.Path())
+		}
+	}
+	return nil
 }
 
 // Analyse analyses a tree starting at root.
@@ -39,7 +65,7 @@ func (c *Codec) Analyse(root interface{}) (Node, error) {
 
 // NewNode creates a new node.
 func (c *Codec) NewNode(parent Node, id NodeID, field *FieldInfo) (*Node, error) {
-	n, new := c.Nodes.Register(id)
+	n, new := c.nodes.Register(id)
 	if !new {
 		return n, nil
 	}

@@ -11,32 +11,32 @@ var goodFileTargets = map[FileTargetsAssertion]func() (FileTargets, error){
 	{2, ""}: func() (FileTargets, error) {
 		ts := MakeFileTargets(4)
 		err := ts.Add(
-			&FileTarget{Path: "a"},
-			&FileTarget{Path: "b"},
+			&FileTarget{FilePath: "a"},
+			&FileTarget{FilePath: "b"},
 		)
 		return ts, err
 	},
 	{3, ""}: func() (FileTargets, error) {
 		return NewFileTargets(
-			&FileTarget{Path: "c"},
-			&FileTarget{Path: "d"},
-			&FileTarget{Path: "e"},
+			&FileTarget{FilePath: "c"},
+			&FileTarget{FilePath: "d"},
+			&FileTarget{FilePath: "e"},
 		)
 	},
 	{5, ""}: func() (FileTargets, error) {
 
 		ts := MakeFileTargets(4)
 		err := ts.Add(
-			&FileTarget{Path: "a"},
-			&FileTarget{Path: "b"},
+			&FileTarget{FilePath: "a"},
+			&FileTarget{FilePath: "b"},
 		)
 		if err != nil {
 			return ts, err
 		}
 		ts2, err := NewFileTargets(
-			&FileTarget{Path: "c"},
-			&FileTarget{Path: "d"},
-			&FileTarget{Path: "e"},
+			&FileTarget{FilePath: "c"},
+			&FileTarget{FilePath: "d"},
+			&FileTarget{FilePath: "e"},
 		)
 		if err != nil {
 			return ts, err
@@ -46,8 +46,8 @@ var goodFileTargets = map[FileTargetsAssertion]func() (FileTargets, error){
 	},
 	{-1, `duplicate file target "a"`}: func() (FileTargets, error) {
 		return NewFileTargets(
-			&FileTarget{Path: "a"},
-			&FileTarget{Path: "a"},
+			&FileTarget{FilePath: "a"},
+			&FileTarget{FilePath: "a"},
 		)
 	},
 }
