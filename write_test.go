@@ -14,15 +14,15 @@ type TestWriteStruct struct {
 	InlineMap    map[string]int      // regular field
 	StructB      StructB             // regular field
 	StructBPtr   *StructB            // regular field
-	IgnoredField string              `hy:"-"`             // not output anywhere
-	StructFile   StructB             `hy:"a-file"`        // a single file
-	StringFile   string              `hy:"a-string-file"` // a single file
-	SliceFile    []string            `hy:"a-slice-file"`  // a single file
-	MapFile      map[string]string   `hy:"a-map-file"`    // a single file
-	Nested       *TestWriteStruct    `hy:"nested"`        // like a new root
-	Slice        []StructB           `hy:"slice/"`        // file per element
-	Map          map[string]StructB  `hy:"map/"`          // file per element
-	MapOfPtr     map[string]*StructB `hy:"map-of-ptr/"`   // file per element
+	IgnoredField string              `hy:"-"`                // not output anywhere
+	StructFile   StructB             `hy:"a-file"`           // a single file
+	StringFile   string              `hy:"a-string-file"`    // a single file
+	SliceFile    []string            `hy:"a-slice-file"`     // a single file
+	MapFile      map[string]string   `hy:"a-map-file"`       // a single file
+	Nested       *TestWriteStruct    `hy:"nested"`           // like a new root
+	Slice        []StructB           `hy:"slice/"`           // file per element
+	Map          map[string]StructB  `hy:"map/,Name"`        // file per element
+	MapOfPtr     map[string]*StructB `hy:"map-of-ptr/,Name"` // file per element
 }
 
 var testWriteStructData = TestWriteStruct{
@@ -51,9 +51,10 @@ var testWriteStructData = TestWriteStruct{
 			"this-one-has-a-value": &StructB{},
 		},
 		Map: map[string]StructB{
+			// Notice how we don't set the Name field here. Hy sets it in the write
+			// data because of the ",Name" tag.
 			"a-zero-file":       StructB{},
 			"another-zero-file": StructB{},
-			"nonzero-file":      StructB{Name: "I am not zero."},
 		},
 	},
 	Slice: []StructB{{Name: "One"}, {Name: "Two"}},
@@ -103,7 +104,7 @@ func TestNode_Write_struct(t *testing.T) {
 		t.Fatal(err)
 	}
 	targets := wc.Targets
-	expectedLen := 20
+	expectedLen := len(expectedWriteFileTargets)
 	if targets.Len() != expectedLen {
 		t.Errorf("got len %d; want %d", targets.Len(), expectedLen)
 	}

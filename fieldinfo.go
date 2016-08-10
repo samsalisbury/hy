@@ -191,7 +191,8 @@ func (fi *FieldInfo) validateKeyFild() error {
 	fi.SetKeyFunc = reflect.MakeFunc(setFuncType, func(in []reflect.Value) []reflect.Value {
 		elem := in[0].Elem()
 		if !elem.IsValid() {
-			panic("INVALID VALUE OF TYPE: " + elem.Type().String())
+			//panic("INVALID VALUE OF TYPE: " + elem.Type().String())
+			return nil
 		}
 		in[0].Elem().FieldByName(fi.KeyField).Set(in[1])
 		return nil

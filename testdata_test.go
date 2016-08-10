@@ -58,22 +58,19 @@ var expectedWriteFileTargets = map[string]FileTarget{
 	"nested/map-of-ptr/another-nil-file": FileTarget{Data: nil},
 	"nested/map-of-ptr/this-one-has-a-value": FileTarget{
 		Data: map[string]interface{}{
-			"Name": "",
+			// set automatically
+			"Name": "this-one-has-a-value",
 		},
 	},
 	"nested/map/a-zero-file": FileTarget{
 		Data: map[string]interface{}{
-			"Name": "",
+			// set automatically
+			"Name": "a-zero-file",
 		},
 	},
 	"nested/map/another-zero-file": FileTarget{
 		Data: map[string]interface{}{
-			"Name": "",
-		},
-	},
-	"nested/map/nonzero-file": FileTarget{
-		Data: map[string]interface{}{
-			"Name": "I am not zero.",
+			"Name": "another-zero-file",
 		},
 	},
 	"slice/0": FileTarget{
