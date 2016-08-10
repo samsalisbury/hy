@@ -26,6 +26,9 @@ func (c *Codec) NewMapNode(base NodeBase) (Node, error) {
 
 // ChildPathName returns the key as a string.
 func (n *MapNode) ChildPathName(child Node, key, val reflect.Value) string {
+	//if n.Field != nil && n.Field.GetKeyFunc != nil {
+	//	n.Field.GetKeyFunc.Call([]reflect.Value{val})
+	//}
 	return fmt.Sprint(key)
 }
 
@@ -34,6 +37,9 @@ func (n *MapNode) WriteTargets(c WriteContext, key, val reflect.Value) error {
 	elemNode := *n.ElemNode
 	for _, k := range val.MapKeys() {
 		v := val.MapIndex(k)
+		if n.Field != nil && n.Field.SetKeyFunc.IsValid() {
+			n.Field.SetKeyFunc.Call([]reflect.Value{v, k})
+		}
 		childContext := c.Push(elemNode.PathName(k, v))
 		if err := elemNode.Write(childContext, k, v); err != nil {
 			return errors.Wrapf(err, "writing map index %q failed", fmt.Sprint(k))

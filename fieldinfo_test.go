@@ -50,10 +50,10 @@ type FieldInfoTestStruct struct {
 	KeyFieldTag4 MP `hy:",Name"`  // AutoPathName + KeyField = "Name" + IsDir
 
 	// hy key get/set tags
-	KeyGetSet1 M  `hy:"/,GetName(),SetName()"` // AutoPathName + IsDir + GetKey = "GetName" + SetKey = "SetName"
-	KeyGetSet2 M  `hy:",GetName(),SetName()"`  // AutoPathName + IsDir + GetKey = "GetName" + SetKey = "SetName"
-	KeyGetSet3 MP `hy:"/,GetName(),SetName()"` // AutoPathName + IsDir + GetKey = "GetName" + SetKey = "SetName"
-	KeyGetSet4 MP `hy:",GetName(),SetName()"`  // AutoPathName + IsDir + GetKey = "GetName" + SetKey = "SetName"
+	//KeyGetSet1 M  `hy:"/,GetName(),SetName()"` // AutoPathName + IsDir + GetKey = "GetName" + SetKey = "SetName"
+	//KeyGetSet2 M  `hy:",GetName(),SetName()"`  // AutoPathName + IsDir + GetKey = "GetName" + SetKey = "SetName"
+	//KeyGetSet3 MP `hy:"/,GetName(),SetName()"` // AutoPathName + IsDir + GetKey = "GetName" + SetKey = "SetName"
+	//KeyGetSet4 MP `hy:",GetName(),SetName()"`  // AutoPathName + IsDir + GetKey = "GetName" + SetKey = "SetName"
 }
 
 var fieldInfoGoodCalls = map[string]FieldInfo{
@@ -118,6 +118,41 @@ func TestNewFieldInfo_success(t *testing.T) {
 				numFailed++
 				issue := fmt.Sprintf("%s == %q; want %q", f, actualString, expectedString)
 				t.Errorf("%s for %s %s %# q", issue, field.Name, field.Type, field.Tag)
+			}
+			// check getter and setter
+			if f == "KeyField" && actualString != "" {
+				mapType := actual.Type
+				elemType := mapType.Elem()
+
+				actualSetFuncVal := actualVal.FieldByName("SetKeyFunc").Interface().(reflect.Value)
+				actualSetFuncType := actualSetFuncVal.Type()
+				expectedSetFuncType := reflect.TypeOf(func(*A, string) {})
+				if actualSetFuncType != expectedSetFuncType {
+					issue := fmt.Sprintf("%s is a %s; want a %s", "SetKeyFunc", actualSetFuncType, expectedSetFuncType)
+					t.Errorf("%s for %s %s %# q", issue, field.Name, field.Type, field.Tag)
+				}
+				// call set func
+				dummy := reflect.New(elemType)
+				if elemType.Kind() == reflect.Ptr {
+					dummy = reflect.New(elemType.Elem())
+				}
+				expectedDummyKey := reflect.ValueOf("some key")
+				actualSetFuncVal.Call([]reflect.Value{dummy, expectedDummyKey}) // check this worked below
+
+				actualGetFuncVal := actualVal.FieldByName("GetKeyFunc").Interface().(reflect.Value)
+				actualGetFuncType := actualGetFuncVal.Type()
+				expectedGetFuncType := reflect.TypeOf(func(A) string { return "" })
+				if actualGetFuncType != expectedGetFuncType {
+					issue := fmt.Sprintf("%s is a %s; want a %s", "GetKeyFunc", actualGetFuncType, expectedGetFuncType)
+					t.Errorf("%s for %s %s %# q", issue, field.Name, field.Type, field.Tag)
+				}
+				// call get func
+				actualDummyKey := actualGetFuncVal.Call([]reflect.Value{dummy.Elem()})[0]
+				actualDKString := fmt.Sprint(actualDummyKey)
+				expectedDKString := fmt.Sprint(expectedDummyKey)
+				if actualDKString != expectedDKString {
+					t.Errorf("round-trip SetKey/GetKey failed; got %q; want %q", actualDKString, expectedDKString)
+				}
 			}
 		}
 		if actual.Name != field.Name {

@@ -13,7 +13,7 @@ type (
 		FileStruct     StructB `hy:"."`
 		EmbeddedMap    map[string]string
 		FileMap        map[string]StructB `hy:"."`
-		Map            map[string]StructB `hy:"./"`
+		Map            map[string]StructB `hy:"/,Name"`
 		EmbeddedSlice  []string
 		FileSlice      []string   `hy:"."`
 		Slice          []*StructB `hy:"./"`

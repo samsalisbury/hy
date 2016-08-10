@@ -7,8 +7,8 @@ type NodeBase struct {
 	NodeID
 	// Parent is the parent of this node. It is nil only for the root node.
 	Parent Node
-	// Tag is the struct tag applying to this node.
-	Tag Tag
+	// FieldInfo is the field info for this node.
+	Field *FieldInfo
 	// Zero is a zero value of this node's Type.
 	Zero interface{}
 	// HasKey indicates if this type has a key (e.g. maps and slices)
@@ -27,7 +27,7 @@ func (base NodeBase) ID() NodeID {
 }
 
 // NewNodeBase returns a new NodeBase.
-func NewNodeBase(id NodeID, parent Node, tag Tag, self *Node) NodeBase {
+func NewNodeBase(id NodeID, parent Node, field *FieldInfo, self *Node) NodeBase {
 	var k reflect.Kind
 	if parent != nil {
 		k = parent.ID().Type.Kind()
@@ -39,7 +39,7 @@ func NewNodeBase(id NodeID, parent Node, tag Tag, self *Node) NodeBase {
 	return NodeBase{
 		NodeID: id,
 		Parent: parent,
-		Tag:    tag,
+		Field:  field,
 		Zero:   zero,
 		HasKey: k == reflect.Map || k == reflect.Slice,
 		self:   self,
@@ -71,15 +71,18 @@ func (base NodeBase) PathName(key, val reflect.Value) string {
 
 // GetTag returns the tag associated with this node.
 func (base NodeBase) GetTag() Tag {
-	return base.Tag
+	return base.Field.Tag
 }
 
 // FixedPathName returns the fixed path name of this node.
 // If there is no fixed path name, returns empty string and false.
 // Otherwise returns the fixed path name and true.
 func (base NodeBase) FixedPathName() (string, bool) {
-	if base.Tag.PathName != "" {
-		return base.Tag.PathName, true
+	if base.Field == nil {
+		return "", false
+	}
+	if base.Field.PathName != "" {
+		return base.Field.PathName, true
 	}
 	if base.FieldName != "" {
 		return base.FieldName, true

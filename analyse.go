@@ -53,7 +53,7 @@ func (c *Codec) Analyse(root interface{}) (Node, error) {
 		return nil, errors.Errorf("failed to analyse %s: cannot analyse kind %s",
 			id.Type, id.Type.Kind())
 	}
-	n, err := c.NewNode(nil, id, Tag{})
+	n, err := c.NewNode(nil, id, nil)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to analyse %T", root)
 	}
@@ -61,19 +61,19 @@ func (c *Codec) Analyse(root interface{}) (Node, error) {
 }
 
 // NewNode creates a new node.
-func (c *Codec) NewNode(parent Node, id NodeID, tag Tag) (*Node, error) {
+func (c *Codec) NewNode(parent Node, id NodeID, field *FieldInfo) (*Node, error) {
 	n, new := c.Nodes.Register(id)
 	if !new {
 		return n, nil
 	}
 	var err error
 	k := id.Type.Kind()
-	base := NewNodeBase(id, parent, tag, n)
+	base := NewNodeBase(id, parent, field, n)
 	if k == reflect.Struct {
 		*n, err = c.NewStructNode(base)
 		return n, err
 	}
-	if id.IsLeaf || !tag.IsDir {
+	if id.IsLeaf || !field.Tag.IsDir {
 		*n = NewFileNode(base)
 		return n, nil
 	}

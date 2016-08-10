@@ -182,13 +182,18 @@ func (fi *FieldInfo) validateKeyFild() error {
 		return errors.Errorf("%s.%s is %s; want %s (from %s)",
 			fi.ElemType, elemKeyField.Name, elemKeyField.Type, fi.KeyType, fi.Type)
 	}
-	getFuncType := reflect.FuncOf(nil, []reflect.Type{fi.KeyType}, false)
-	setFuncType := reflect.FuncOf([]reflect.Type{fi.KeyType}, nil, false)
+	getFuncType := reflect.FuncOf([]reflect.Type{fi.ElemType}, []reflect.Type{fi.KeyType}, false)
+	ptrToElem := reflect.PtrTo(fi.ElemType)
+	setFuncType := reflect.FuncOf([]reflect.Type{ptrToElem, fi.KeyType}, nil, false)
 	fi.GetKeyFunc = reflect.MakeFunc(getFuncType, func(in []reflect.Value) []reflect.Value {
 		return []reflect.Value{in[0].FieldByName(fi.KeyField)}
 	})
 	fi.SetKeyFunc = reflect.MakeFunc(setFuncType, func(in []reflect.Value) []reflect.Value {
-		in[0].FieldByName(fi.KeyField).Set(in[1])
+		elem := in[0].Elem()
+		if !elem.IsValid() {
+			panic("INVALID VALUE OF TYPE: " + elem.Type().String())
+		}
+		in[0].Elem().FieldByName(fi.KeyField).Set(in[1])
 		return nil
 	})
 	return nil

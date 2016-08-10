@@ -41,7 +41,7 @@ func (c *Codec) NewStructNode(base NodeBase) (Node, error) {
 		if err != nil {
 			return nil, errors.Wrapf(err, "getting ID for %T.%s", n.Type, field.Name)
 		}
-		child, err := c.NewNode(n, childNodeID, field.Tag)
+		child, err := c.NewNode(n, childNodeID, field)
 		if err != nil {
 			return nil, errors.Wrapf(err, "analysing %T.%s", n.Type, field.Name)
 		}

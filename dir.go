@@ -15,6 +15,6 @@ func (n *DirNodeBase) AnalyseElemNode(parent Node, c *Codec) error {
 	if err != nil {
 		return errors.Wrap(err, "getting node ID")
 	}
-	n.ElemNode, err = c.NewNode(parent, elemID, Tag{})
+	n.ElemNode, err = c.NewNode(parent, elemID, nil)
 	return errors.Wrapf(err, "analysing type %T failed", elemType)
 }
