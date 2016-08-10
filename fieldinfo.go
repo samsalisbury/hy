@@ -13,7 +13,18 @@ import (
 type FieldInfo struct {
 	Name, FieldName, PathName, KeyField, GetKeyName, SetKeyName string
 	// Type is the type of this fields.
-	Type reflect.Type
+	Type,
+	// KeyType is nil unless this field is a map or slice. If this field is a
+	// map, then KeyType will be the type of the map's key. If it's a slice,
+	// then KeyType will be int.
+	KeyType,
+	// ElemType is nil unless this field is a map or slice. It is the element
+	// type of the map or slice.
+	ElemType reflect.Type
+	// GetKeyFunc is a function getting the key from this map or slice's element.
+	GetKeyFunc,
+	// SetKeyFunc is a function setting the key on this map or slice's element.
+	SetKeyFunc reflect.Value
 	// Tag is the parsed hy tag.
 	Tag Tag
 	// Ignore indicates this field should not be written or read by hy.
@@ -36,6 +47,9 @@ type FieldInfo struct {
 	OmitEmpty bool
 }
 
+var intType = reflect.TypeOf(1)
+var strType = reflect.TypeOf("")
+
 // NewFieldInfo creates a new FieldInfo, analysing the tag and checking the
 // tag's named ID field or ID get/set methods for consistency.
 func NewFieldInfo(f reflect.StructField) (*FieldInfo, error) {
@@ -50,6 +64,9 @@ func NewFieldInfo(f reflect.StructField) (*FieldInfo, error) {
 		getKeyName, setKeyName string
 	var ignore, isField, isString, autoFieldName,
 		isDir, autoPathName, omitEmpty bool
+	var keyType, elemType reflect.Type
+
+	k := f.Type.Kind()
 
 	if tag.Ignore || (tag.None && jsonTag.Ignore) {
 		ignore = true
@@ -86,6 +103,15 @@ func NewFieldInfo(f reflect.StructField) (*FieldInfo, error) {
 		setKeyName = tag.SetKey
 	}
 
+	if k == reflect.Map {
+		keyType = f.Type.Key()
+		elemType = removePointer(f.Type.Elem())
+	}
+	if k == reflect.Slice {
+		keyType = intType
+		elemType = removePointer(f.Type.Elem())
+	}
+
 done:
 
 	fi := &FieldInfo{
@@ -93,6 +119,8 @@ done:
 		FieldName:     fieldName,
 		PathName:      pathName,
 		KeyField:      keyField,
+		KeyType:       keyType,
+		ElemType:      elemType,
 		GetKeyName:    getKeyName,
 		SetKeyName:    setKeyName,
 		Type:          f.Type,
@@ -109,17 +137,60 @@ done:
 		"analysing field %s %s %# q", f.Name, f.Type, f.Tag)
 }
 
+func removePointer(t reflect.Type) reflect.Type {
+	if t.Kind() == reflect.Ptr {
+		return t.Elem()
+	}
+	return t
+}
+
 // Validate returns any validation errors with this FieldInfo.
 func (fi *FieldInfo) Validate() error {
-	if err := validateName(fi.KeyField); err != nil {
+	if err := fi.validateKeyFild(); err != nil {
 		return errors.Wrapf(err, "reading key field name")
 	}
-	if err := validateName(fi.GetKeyName); err != nil {
-		return errors.Wrapf(err, "reading get key method name")
+	//if err := validateName(fi.GetKeyName); err != nil {
+	//	return errors.Wrapf(err, "reading get key method name")
+	//}
+	//if err := validateName(fi.SetKeyName); err != nil {
+	//	return errors.Wrapf(err, "reading set key method name")
+	//}
+	return nil
+}
+
+func (fi *FieldInfo) validateKeyFild() error {
+	if fi.KeyField == "" {
+		return nil
 	}
-	if err := validateName(fi.SetKeyName); err != nil {
-		return errors.Wrapf(err, "reading set key method name")
+	if fi.ElemType == nil {
+		return nil
 	}
+	if err := validateName(fi.KeyField); err != nil {
+		return err
+	}
+	if fi.ElemType.Kind() != reflect.Struct {
+		return errors.Errorf("element type %s not supported; must be struct", fi.ElemType)
+	}
+	if fi.KeyType.Kind() != reflect.String {
+		return errors.Errorf("key type %s not supported; must be string", fi.KeyType)
+	}
+	elemKeyField, ok := fi.ElemType.FieldByName(fi.KeyField)
+	if !ok {
+		return errors.Errorf("%s has no field %q", fi.ElemType, fi.KeyField)
+	}
+	if elemKeyField.Type != fi.KeyType {
+		return errors.Errorf("%s.%s is %s; want %s (from %s)",
+			fi.ElemType, elemKeyField.Name, elemKeyField.Type, fi.KeyType, fi.Type)
+	}
+	getFuncType := reflect.FuncOf(nil, []reflect.Type{fi.KeyType}, false)
+	setFuncType := reflect.FuncOf([]reflect.Type{fi.KeyType}, nil, false)
+	fi.GetKeyFunc = reflect.MakeFunc(getFuncType, func(in []reflect.Value) []reflect.Value {
+		return []reflect.Value{in[0].FieldByName(fi.KeyField)}
+	})
+	fi.SetKeyFunc = reflect.MakeFunc(setFuncType, func(in []reflect.Value) []reflect.Value {
+		in[0].FieldByName(fi.KeyField).Set(in[1])
+		return nil
+	})
 	return nil
 }
 
