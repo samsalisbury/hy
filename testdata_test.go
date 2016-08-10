@@ -1,96 +1,107 @@
 package hy
 
-var expectedWriteFileTargets = map[string]FileTarget{
-	"": FileTarget{
-		Data: map[string]interface{}{
-			"Name":        "Test struct writing",
-			"Int":         1,
-			"InlineSlice": []string{"a", "string", "slice"},
-			"InlineMap":   map[string]int{"one": 1, "two": 2, "three": 3},
-			"StructB":     StructB{},
-			"StructBPtr":  nil,
+var fts FileTargets
+var expectedWriteFileTargets map[string]*FileTarget
+
+func init() {
+	fts, err := NewFileTargets([]*FileTarget{
+		{Path: "",
+			Data: map[string]interface{}{
+				"Name":        "Test struct writing",
+				"Int":         1,
+				"InlineSlice": []string{"a", "string", "slice"},
+				"InlineMap":   map[string]int{"one": 1, "two": 2, "three": 3},
+				"StructB":     StructB{},
+				"StructBPtr":  nil,
+			},
 		},
-	},
-	"a-file": FileTarget{
-		Data: map[string]interface{}{
-			"Name": "A file",
+		{Path: "a-file",
+			Data: map[string]interface{}{
+				"Name": "A file",
+			},
 		},
-	},
-	"a-string-file": FileTarget{
-		Data: "A string in a file.",
-	},
-	"nested": FileTarget{
-		Data: map[string]interface{}{
-			"Name":        "A nested struct pointer.",
-			"Int":         2,
-			"InlineMap":   nil,
-			"InlineSlice": nil,
-			"StructB":     StructB{},
-			"StructBPtr":  nil,
+		{Path: "a-string-file",
+			Data: "A string in a file.",
 		},
-	},
-	"nested/a-file": FileTarget{
-		Data: map[string]interface{}{"Name": "Struct B file"},
-	},
-	"nested/slice/0": FileTarget{
-		Data: map[string]interface{}{"Name": "Nested One"},
-	},
-	"nested/slice/1": FileTarget{
-		Data: map[string]interface{}{"Name": "Nested Two"},
-	},
-	"nested/nested": FileTarget{
-		Data: map[string]interface{}{
-			"Name":        "",
-			"Int":         0,
-			"InlineSlice": nil,
-			"InlineMap":   nil,
-			"StructB":     StructB{},
-			"StructBPtr":  nil,
+		{Path: "nested",
+			Data: map[string]interface{}{
+				"Name":        "A nested struct pointer.",
+				"Int":         2,
+				"InlineMap":   nil,
+				"InlineSlice": nil,
+				"StructB":     StructB{},
+				"StructBPtr":  nil,
+			},
 		},
-	},
-	"nested/nested/a-slice-file": FileTarget{
-		Data: []string{"this", "is", "a", "slice", "in", "a", "file"},
-	},
-	"nested/nested/a-map-file": FileTarget{
-		Data: map[string]string{"deeply-nested": "map", "in a file": "yes"},
-	},
-	"nested/map-of-ptr/a-nil-file":       FileTarget{Data: nil},
-	"nested/map-of-ptr/another-nil-file": FileTarget{Data: nil},
-	"nested/map-of-ptr/this-one-has-a-value": FileTarget{
-		Data: map[string]interface{}{
-			// set automatically
-			"Name": "this-one-has-a-value",
+		{Path: "nested/a-file",
+			Data: map[string]interface{}{"Name": "Struct B file"},
 		},
-	},
-	"nested/map/a-zero-file": FileTarget{
-		Data: map[string]interface{}{
-			// set automatically
-			"Name": "a-zero-file",
+		{Path: "nested/slice/0",
+			Data: map[string]interface{}{"Name": "Nested One"},
 		},
-	},
-	"nested/map/another-zero-file": FileTarget{
-		Data: map[string]interface{}{
-			"Name": "another-zero-file",
+		{Path: "nested/slice/1",
+			Data: map[string]interface{}{"Name": "Nested Two"},
 		},
-	},
-	"slice/0": FileTarget{
-		Data: map[string]interface{}{
-			"Name": "One",
+		{Path: "nested/nested",
+			Data: map[string]interface{}{
+				"Name":        "",
+				"Int":         0,
+				"InlineSlice": nil,
+				"InlineMap":   nil,
+				"StructB":     StructB{},
+				"StructBPtr":  nil,
+			},
 		},
-	},
-	"slice/1": FileTarget{
-		Data: map[string]interface{}{
-			"Name": "Two",
+		{Path: "nested/nested/a-slice-file",
+			Data: []string{"this", "is", "a", "slice", "in", "a", "file"},
 		},
-	},
-	"map/First": FileTarget{
-		Data: map[string]interface{}{
-			"Name": "First",
+		{Path: "nested/nested/a-map-file",
+			Data: map[string]string{"deeply-nested": "map", "in a file": "yes"},
 		},
-	},
-	"map/Second": FileTarget{
-		Data: map[string]interface{}{
-			"Name": "Second",
+		{Path: "nested/map-of-ptr/a-nil-file",
+			Data: nil},
+		{Path: "nested/map-of-ptr/another-nil-file",
+			Data: nil},
+		{Path: "nested/map-of-ptr/this-one-has-a-value",
+			Data: map[string]interface{}{
+				// set automatically
+				"Name": "this-one-has-a-value",
+			},
 		},
-	},
+		{Path: "nested/map/a-zero-file",
+			Data: map[string]interface{}{
+				// set automatically
+				"Name": "a-zero-file",
+			},
+		},
+		{Path: "nested/map/another-zero-file",
+			Data: map[string]interface{}{
+				"Name": "another-zero-file",
+			},
+		},
+		{Path: "slice/0",
+			Data: map[string]interface{}{
+				"Name": "One",
+			},
+		},
+		{Path: "slice/1",
+			Data: map[string]interface{}{
+				"Name": "Two",
+			},
+		},
+		{Path: "map/First",
+			Data: map[string]interface{}{
+				"Name": "First",
+			},
+		},
+		{Path: "map/Second",
+			Data: map[string]interface{}{
+				"Name": "Second",
+			},
+		},
+	}...)
+	if err != nil {
+		panic(err)
+	}
+	expectedWriteFileTargets = fts.Snapshot()
 }
