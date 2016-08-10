@@ -1,10 +1,11 @@
 package hy
 
-var fts FileTargets
-var expectedWriteFileTargets map[string]*FileTarget
+var expectedFileTargets FileTargets
+var expectedFileTargetsSnapshot map[string]*FileTarget
 
 func init() {
-	fts, err := NewFileTargets([]*FileTarget{
+	var err error
+	expectedFiles, err := NewFileTargets([]*FileTarget{
 		{Path: "",
 			Data: map[string]interface{}{
 				"Name":        "Test struct writing",
@@ -103,5 +104,5 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	expectedWriteFileTargets = fts.Snapshot()
+	expectedFileTargetsSnapshot = expectedFiles.Snapshot()
 }
