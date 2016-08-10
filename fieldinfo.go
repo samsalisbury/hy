@@ -1,8 +1,10 @@
 package hy
 
 import (
+	"bytes"
 	"reflect"
 	"strings"
+	"unicode"
 
 	"github.com/pkg/errors"
 )
@@ -80,10 +82,13 @@ func NewFieldInfo(f reflect.StructField) (*FieldInfo, error) {
 	}
 	if strings.HasSuffix(tag.SetKey, "()") {
 		setKeyName = strings.TrimSuffix(tag.SetKey, "()")
+	} else {
+		setKeyName = tag.SetKey
 	}
 
 done:
-	return &FieldInfo{
+
+	fi := &FieldInfo{
 		Name:          f.Name,
 		FieldName:     fieldName,
 		PathName:      pathName,
@@ -99,7 +104,39 @@ done:
 		IsDir:         isDir,
 		AutoPathName:  autoPathName,
 		OmitEmpty:     omitEmpty,
-	}, nil
+	}
+	return fi, errors.Wrapf(fi.Validate(),
+		"analysing field %s %s %# q", f.Name, f.Type, f.Tag)
+}
+
+// Validate returns any validation errors with this FieldInfo.
+func (fi *FieldInfo) Validate() error {
+	if err := validateName(fi.KeyField); err != nil {
+		return errors.Wrapf(err, "reading key field name")
+	}
+	if err := validateName(fi.GetKeyName); err != nil {
+		return errors.Wrapf(err, "reading get key method name")
+	}
+	if err := validateName(fi.SetKeyName); err != nil {
+		return errors.Wrapf(err, "reading set key method name")
+	}
+	return nil
+}
+
+func validateName(s string) error {
+	if len(s) == 0 {
+		return nil
+	}
+	rs := bytes.Runes([]byte(s))
+	if s == "_" || (!unicode.IsLetter(rs[0]) && rs[0] != '_') {
+		return errors.Errorf("illegal token %q", s)
+	}
+	for _, r := range rs[1:] {
+		if !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '_' {
+			return errors.Errorf("illegal token %q", s)
+		}
+	}
+	return nil
 }
 
 // Following code copied from https://golang.org/src/encoding/json

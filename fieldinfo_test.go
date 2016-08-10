@@ -9,6 +9,10 @@ import (
 type A struct {
 	Name string
 }
+
+func (a *A) GetName() string     { return a.Name }
+func (a *A) SetName(name string) { a.Name = name }
+
 type M map[string]A
 type MP map[string]*A
 
@@ -52,8 +56,6 @@ type FieldInfoTestStruct struct {
 	KeyGetSet4 MP `hy:",GetName(),SetName()"`  // AutoPathName + IsDir + GetKey = "GetName" + SetKey = "SetName"
 }
 
-var fitsType = reflect.TypeOf(FieldInfoTestStruct{})
-
 var fieldInfoGoodCalls = map[string]FieldInfo{
 	"NoTag1": {IsField: true, AutoFieldName: true},
 	"NoTag2": {IsField: true, AutoFieldName: true},
@@ -77,7 +79,8 @@ var fieldInfoGoodCalls = map[string]FieldInfo{
 	"KeyFieldTag4": {AutoPathName: true, KeyField: "Name"},
 }
 
-func TestNewFieldInfo(t *testing.T) {
+func TestNewFieldInfo_success(t *testing.T) {
+	fitsType := reflect.TypeOf(FieldInfoTestStruct{})
 	numFailed := 0
 	for fieldName, expected := range fieldInfoGoodCalls {
 		field, ok := fitsType.FieldByName(fieldName)
@@ -117,6 +120,85 @@ func TestNewFieldInfo(t *testing.T) {
 				t.Errorf("%s for %s %s %# q", issue, field.Name, field.Type, field.Tag)
 			}
 		}
+		if actual.Name != field.Name {
+			// No point repeating this in each test row.
+			issue := fmt.Sprintf("%s == %q; want %q", "Name", actual.Name, field.Name)
+			t.Errorf("%s for %s %s %# q", issue, field.Name, field.Type, field.Tag)
+		}
 	}
 	t.Logf("%d assertions failed", numFailed)
+}
+
+type FieldInfoErrors struct {
+	IllegalGet1  M `hy:",/"`
+	IllegalGet2  M `hy:",_"`
+	IllegalGet3  M `hy:",1"`
+	IllegalGet4  M `hy:",."`
+	IllegalGet5  M `hy:",1abc"`
+	IllegalGet6  M `hy:",ab.c"`
+	IllegalGet7  M `hy:",ab-c"`
+	IllegalGet8  M `hy:",GetName"`   // no field named GetName (did you mean "GetName()"?
+	IllegalGet9  M `hy:",GetName("`  // illegal token "GetName("
+	IllegalGet10 M `hy:",GetName)"`  // illegal token "GetName)"
+	IllegalGet11 M `hy:",Name()"`    // no method "Name"
+	IllegalGet12 M `hy:",SetName()"` // wrong signature
+
+	IllegalSet1 M `hy:",,Name()"`   // No method called "Name"
+	IllegalSet2 M `hy:",,SetName"`  // setter must end with ()
+	IllegalSet3 M `hy:",,SetName("` // illegal token "SetName("
+	IllegalSet4 M `hy:",,SetName)"` // illegal token "SetName)"
+	IllegalSet5 M `hy:",,/()"`      // illegal token /
+	IllegalSet6 M `hy:",,_()"`      // illegal token _
+	IllegalSet7 M `hy:",,1()"`      // illegal token 1
+	IllegalSet8 M `hy:",,.()"`      // illegal token .
+}
+
+func quoteTag(tag string) string { return fmt.Sprintf("%# q", tag) }
+
+var newFieldInfoBadCalls = map[string]string{
+	"IllegalGet1":  `reading key field name: illegal token "/"`,
+	"IllegalGet2":  `reading key field name: illegal token "_"`,
+	"IllegalGet3":  `reading key field name: illegal token "1"`,
+	"IllegalGet4":  `reading key field name: illegal token "."`,
+	"IllegalGet5":  `reading key field name: illegal token "1abc"`,
+	"IllegalGet6":  `reading key field name: illegal token "ab.c"`,
+	"IllegalGet7":  `reading key field name: illegal token "ab-c"`,
+	"IllegalGet8":  `reading key field name: *hy.A has no field "GetName""`,
+	"IllegalGet9":  `reading key field name: illegal token "GetName("`,
+	"IllegalGet10": `reading key field name: illegal token "GetName)"`,
+
+	"IllegalGet11": `reading get key method name: *hy.A has no method "Name"`,
+	"IllegalGet12": `reading get key method name: *hy.Ai.SetName() has wrong signature`,
+
+	"IllegalSet1": `*hy.A has no method called "Name" for set key func name in`,
+	"IllegalSet2": `reading set key method name: setter should end with "()"`,
+	"IllegalSet3": `reading set key method name: illegal token "SetName("`,
+	"IllegalSet4": `reading set key method name: illegal token "SetName)"`,
+	"IllegalSet5": `reading set key method name: illegal token "/"`,
+	"IllegalSet6": `reading set key method name: illegal token "_"`,
+	"IllegalSet7": `reading set key method name: illegal token "1"`,
+	"IllegalSet8": `reading set key method name: illegal token "."`,
+}
+
+func TestNewFieldInfo_failure(t *testing.T) {
+	fieType := reflect.TypeOf(FieldInfoErrors{})
+	for fieldName, expected := range newFieldInfoBadCalls {
+		field, ok := fieType.FieldByName(fieldName)
+		if !ok {
+			t.Errorf("no field named %q", fieldName)
+			continue
+		}
+		// complete the expectation
+		expected = fmt.Sprintf("analysing field %s %s %# q: %s",
+			field.Name, field.Type, field.Tag, expected)
+		_, actualErr := NewFieldInfo(field)
+		if actualErr == nil {
+			t.Errorf("got nil; want error:\n\t%s", expected)
+			continue
+		}
+		actual := actualErr.Error()
+		if actual != expected {
+			t.Errorf("got error:\n\t%s'\nwant:\n\t%s", actual, expected)
+		}
+	}
 }
