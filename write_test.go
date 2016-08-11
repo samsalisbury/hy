@@ -103,7 +103,7 @@ func TestNode_Write_struct(t *testing.T) {
 	if err := n.Write(wc, reflect.Value{}, v); err != nil {
 		t.Fatal(err)
 	}
-	targets := wc.Targets
+	targets := wc.targets
 	expectedLen := len(expectedFileTargetsSnapshot)
 	if targets.Len() != expectedLen {
 		t.Errorf("got len %d; want %d", targets.Len(), expectedLen)

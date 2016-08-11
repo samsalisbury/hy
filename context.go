@@ -9,7 +9,7 @@ import (
 // WriteContext is context collected during a write opration.
 type WriteContext struct {
 	// Targets is the collected targets in this write context.
-	Targets FileTargets
+	targets FileTargets
 	// Parent is the parent write context.
 	Parent *WriteContext
 	// PathName is the name of this section of the path.
@@ -18,13 +18,13 @@ type WriteContext struct {
 
 // NewWriteContext returns a new write context.
 func NewWriteContext() WriteContext {
-	return WriteContext{Targets: MakeFileTargets(0)}
+	return WriteContext{targets: MakeFileTargets(0)}
 }
 
 // Push creates a derivative node context.
 func (c WriteContext) Push(pathName string) WriteContext {
 	return WriteContext{
-		Targets:  c.Targets,
+		targets:  c.targets,
 		Parent:   &c,
 		PathName: pathName,
 	}
@@ -41,5 +41,5 @@ func (c WriteContext) Path() string {
 // SetValue sets the value of the current path.
 func (c WriteContext) SetValue(v interface{}) error {
 	t := &FileTarget{FilePath: c.Path(), Value: v}
-	return errors.Wrapf(c.Targets.Add(t), "setting value at %q", c.Path())
+	return errors.Wrapf(c.targets.Add(t), "setting value at %q", c.Path())
 }

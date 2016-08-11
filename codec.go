@@ -34,7 +34,7 @@ func (c *Codec) Write(prefix string, root interface{}) error {
 	if err := rootNode.Write(wc, reflect.Value{}, v); err != nil {
 		return errors.Wrapf(err, "generating write targets")
 	}
-	for _, t := range wc.Targets.Snapshot() {
+	for _, t := range wc.targets.Snapshot() {
 		if err := c.Writer.WriteFile(prefix, t); err != nil {
 			return errors.Wrapf(err, "writing target %q", t.Path())
 		}
