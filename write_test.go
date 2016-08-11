@@ -66,32 +66,6 @@ var testWriteStructData = TestWriteStruct{
 	},
 }
 
-// TODO:
-//   - Use default path names for "." and "./" tags.
-//   - Add options for default path names:
-//     - lowerCamelCase
-//     - CamelCase
-//     - snake-case
-//     - underscores_only
-//     - lowercase
-//     - UPPERCASE
-//   - Respect JSON tags for field names.
-//   - Respect YAML tags for field names?
-//   - Add support for reading FileTargets.
-//   - Add support for auto-filling ID fields in map/slice elements on read.
-//     - Default field:  ID string
-//     - Default getter: ID() string
-//     - Default setter: SetID(string)
-//   - On write, need to pick:
-//     - Fail if ID field not matching key or index?
-//     - Overwrite ID with current key or index?
-//     - Elide ID field from output altogether? (This should be the default, so
-//       it only matters in memory.)
-//     - Other?
-//   - Add support for writing special maps with default fields/methods:
-//   - Add support for writing actual files with a marshaller.
-//   - Add support for reading actual files with a marshaller.
-
 func TestNode_Write_struct(t *testing.T) {
 	c := NewCodec()
 	n, err := c.Analyse(TestWriteStruct{})
