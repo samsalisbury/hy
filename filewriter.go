@@ -11,7 +11,9 @@ import (
 
 // FileWriter is something that can write Targets as files.
 type FileWriter interface {
-	WriteFile(Target) error
+	// WriteFile writes a file representing target, by joining prefix with
+	// Target.Path()
+	WriteFile(prefix string, target Target) error
 }
 
 // FileMarshaler knows how to turn FileTargets into real files.
@@ -26,8 +28,6 @@ type FileMarshaler struct {
 	// RootFileName is the name of the root struct, which will be written only
 	// if the root is a struct with ordinary fields (not in a file or dir).
 	RootFileName string
-	// RoodDir is the root directory in which to write.
-	RootDir string
 }
 
 // JSONWriter is a FileWriter configured to marshal JSON.
@@ -39,22 +39,15 @@ var JSONWriter = FileMarshaler{
 }
 
 // WriteFile writes a file based on t.
-func (fm FileMarshaler) WriteFile(t Target) error {
-	if fm.RootDir == "" {
-		d, err := os.Getwd()
-		if err != nil {
-			return errors.Wrapf(err, "getting working directory")
-		}
-		fm.RootDir = d
-	}
+func (fm FileMarshaler) WriteFile(prefix string, t Target) error {
 	p := t.Path()
 	if p == "" {
 		p = fm.RootFileName
 	}
-	p = path.Join(fm.RootDir, p+"."+fm.FileExtension)
+	p = path.Join(prefix, p+"."+fm.FileExtension)
 	dir := path.Dir(p)
 	if dir != "" {
-		if err := os.MkdirAll(dir, 0644); err != nil {
+		if err := os.MkdirAll(dir, 0755); err != nil {
 			return errors.Wrapf(err, "creating directory %q", dir)
 		}
 	}

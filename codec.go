@@ -24,7 +24,7 @@ func NewCodec(configure ...func(*Codec)) *Codec {
 	return c
 }
 
-func (c *Codec) Write(root interface{}) error {
+func (c *Codec) Write(prefix string, root interface{}) error {
 	rootNode, err := c.Analyse(root)
 	if err != nil {
 		return errors.Wrapf(err, "analysing structure")
@@ -35,7 +35,7 @@ func (c *Codec) Write(root interface{}) error {
 		return errors.Wrapf(err, "generating write targets")
 	}
 	for _, t := range wc.Targets.Snapshot() {
-		if err := c.Writer.WriteFile(t); err != nil {
+		if err := c.Writer.WriteFile(prefix, t); err != nil {
 			return errors.Wrapf(err, "writing target %q", t.Path())
 		}
 	}

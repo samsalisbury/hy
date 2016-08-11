@@ -2,6 +2,7 @@ package hy
 
 import (
 	"encoding/json"
+	"os"
 	"sync/atomic"
 	"testing"
 )
@@ -9,12 +10,18 @@ import (
 func counter() *int64    { var c int64; return &c }
 func increment(c *int64) { atomic.AddInt64(c, 1) }
 
+const prefix = "testdata/out"
+
 func TestCodec_Write(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
+
+	if err := os.RemoveAll(prefix); err != nil {
+		t.Fatalf("failed to remove output dir: %s", err)
+	}
+
 	w := JSONWriter
-	w.RootDir = "testdata/out"
 	numCalls := counter()
 	w.MarshalFunc = func(v interface{}) ([]byte, error) {
 		increment(numCalls)
@@ -24,7 +31,7 @@ func TestCodec_Write(t *testing.T) {
 		c.Writer = w
 	})
 
-	if err := c.Write(testWriteStructData); err != nil {
+	if err := c.Write(prefix, testWriteStructData); err != nil {
 		t.Fatal(err)
 	}
 
