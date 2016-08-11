@@ -23,7 +23,7 @@ func (n *FileNode) ChildPathName(child Node, key, val reflect.Value) string {
 
 // ReadTargets reads a single file into a value.
 func (n *FileNode) ReadTargets(c ReadContext, key reflect.Value) (reflect.Value, error) {
-	val := reflect.New(n.Type).Elem()
+	val := reflect.New(n.Type)
 	valInterface := val.Interface()
 	b, err := c.ReadFile(c.PathName)
 	if err != nil {
@@ -32,10 +32,10 @@ func (n *FileNode) ReadTargets(c ReadContext, key reflect.Value) (reflect.Value,
 	if len(b) == 0 {
 		return val, nil
 	}
-	if err := c.UnmarshalFunc(valInterface, b); err != nil {
+	if err := c.UnmarshalFunc(b, valInterface); err != nil {
 		return reflect.Value{}, errors.Wrapf(err, "unmarshalling file %q", c.FilePath())
 	}
-	return val, nil
+	return val.Elem(), nil
 }
 
 // WriteTargets returns the write target for this file.

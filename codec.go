@@ -8,8 +8,9 @@ import (
 
 // Codec provides the primary encoding and decoding facility of this package.
 type Codec struct {
-	nodes  NodeSet
-	Writer FileWriter
+	nodes         NodeSet
+	Writer        FileWriter
+	UnmarshalFunc func([]byte, interface{}) error
 }
 
 // NewCodec creates a new codec.
@@ -22,6 +23,22 @@ func NewCodec(configure ...func(*Codec)) *Codec {
 		c.Writer = JSONWriter
 	}
 	return c
+}
+
+func (c *Codec) Read(prefix, ext string, root interface{}) error {
+	rootNode, err := c.Analyse(root)
+	if err != nil {
+		return errors.Wrapf(err, "analysing structure")
+	}
+	rc := NewReadContext(prefix, ext)
+	rc.UnmarshalFunc = c.UnmarshalFunc
+	v, err := rootNode.Read(rc, reflect.Value{})
+	if err != nil {
+		return errors.Wrapf(err, "reading root")
+	}
+	val := reflect.ValueOf(root)
+	val.Set(v)
+	return nil
 }
 
 func (c *Codec) Write(prefix string, root interface{}) error {

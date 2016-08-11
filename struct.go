@@ -61,20 +61,23 @@ func (n *StructNode) ChildPathName(child Node, key, val reflect.Value) string {
 
 // ReadTargets reads files into values.
 func (n *StructNode) ReadTargets(c ReadContext, key reflect.Value) (reflect.Value, error) {
-	val := reflect.New(n.Type).Elem()
+	val := reflect.New(n.Type)
 	valInterface := val.Interface()
 	fieldData, err := c.ReadFile(fmt.Sprint(key))
 	if err != nil {
 		return val, errors.Wrapf(err, "readding own fields")
 	}
 	if len(fieldData) != 0 {
-		if err := c.UnmarshalFunc(valInterface, fieldData); err != nil {
+		if err := c.UnmarshalFunc(fieldData, valInterface); err != nil {
 			return val, errors.Wrapf(err, "unmarshaling %q", c.FilePath())
 		}
 	}
+	val = val.Elem()
 	for fieldName, child := range n.Children {
 		childPathName, _ := (*child).FixedPathName()
 		childContext := c.Push(childPathName)
+		// TODO: Not this...
+		d, err := c.ReadFile(childContext)
 		childKey := reflect.ValueOf(childPathName)
 		childVal, err := (*child).Read(childContext, childKey)
 		if err != nil {

@@ -32,6 +32,8 @@ func (n *MapNode) ChildPathName(child Node, key, val reflect.Value) string {
 	return fmt.Sprint(key)
 }
 
+// ReadTargets reads each file in a directory as a map element using the file
+// name as the key.
 func (n *MapNode) ReadTargets(c ReadContext, key reflect.Value) (reflect.Value, error) {
 	files, err := c.ListFiles()
 	if err != nil {

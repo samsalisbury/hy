@@ -4,12 +4,13 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"sort"
 	"strings"
 
 	"github.com/pkg/errors"
 )
 
-// ReaadContext is context collected during a read operation.
+// ReadContext is context collected during a read operation.
 type ReadContext struct {
 	// Targets is the collected targets in this write context.
 	Targets FileTargets
@@ -22,7 +23,7 @@ type ReadContext struct {
 	// Prefix is the base directory.
 	Prefix string
 	// UnmarshalFunc is a function to unmarshal a file into a value.
-	UnmarshalFunc func(interface{}, []byte) error
+	UnmarshalFunc func([]byte, interface{}) error
 }
 
 // NewReadContext returns a new read context.
@@ -41,6 +42,7 @@ func (c ReadContext) Push(pathName string) ReadContext {
 		Parent:        &c,
 		PathName:      pathName,
 		FileExtension: c.FileExtension,
+		UnmarshalFunc: c.UnmarshalFunc,
 	}
 }
 
@@ -57,8 +59,12 @@ func (c ReadContext) FilePath() string {
 	return c.Path() + "." + c.FileExtension
 }
 
+// ListFiles lists all the files in the context directory.
 func (c *ReadContext) ListFiles() ([]string, error) {
 	fs, err := ioutil.ReadDir(c.Path())
+	if os.IsNotExist(err) {
+		err = nil
+	}
 	if err != nil {
 		return nil, errors.Wrapf(err, "read dir failed")
 	}
@@ -69,9 +75,11 @@ func (c *ReadContext) ListFiles() ([]string, error) {
 		}
 		files = append(files, strings.TrimSuffix(f.Name(), "."+c.FileExtension))
 	}
+	sort.Strings(files) // makes tests less annoying
 	return files, nil
 }
 
+// ReadFile reads a specific named file.
 func (c *ReadContext) ReadFile(name string) ([]byte, error) {
 	b, err := ioutil.ReadFile(c.FilePath())
 	if os.IsNotExist(err) {
