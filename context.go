@@ -1,6 +1,10 @@
 package hy
 
-import "path"
+import (
+	"path"
+
+	"github.com/pkg/errors"
+)
 
 // WriteContext is context collected during a write opration.
 type WriteContext struct {
@@ -32,4 +36,10 @@ func (c WriteContext) Path() string {
 		return c.PathName
 	}
 	return path.Join(c.Parent.Path(), c.PathName)
+}
+
+// SetValue sets the value of the current path.
+func (c WriteContext) SetValue(v interface{}) error {
+	t := &FileTarget{FilePath: c.Path(), Value: v}
+	return errors.Wrapf(c.Targets.Add(t), "setting value at %q", c.Path())
 }

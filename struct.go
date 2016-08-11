@@ -60,7 +60,7 @@ func (n *StructNode) ChildPathName(child Node, key, val reflect.Value) string {
 
 // WriteTargets generates file targets.
 func (n *StructNode) WriteTargets(c WriteContext, key, val reflect.Value) error {
-	if err := n.WriteSelfTarget(c, key, val); err != nil {
+	if err := c.SetValue(n.prepareFileData(val)); err != nil {
 		return errors.Wrap(err, "writing self")
 	}
 	if !val.IsValid() {
@@ -76,13 +76,6 @@ func (n *StructNode) WriteTargets(c WriteContext, key, val reflect.Value) error 
 		}
 	}
 	return nil
-}
-
-// WriteSelfTarget writes the struct fields that are not stored in other files.
-func (n *StructNode) WriteSelfTarget(c WriteContext, key, val reflect.Value) error {
-	data := n.prepareFileData(val)
-	t := &FileTarget{FilePath: c.Path(), Value: data}
-	return errors.Wrap(c.Targets.Add(t), "failed to write self")
 }
 
 func (n *StructNode) prepareFileData(val reflect.Value) interface{} {
