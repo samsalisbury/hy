@@ -3,6 +3,7 @@ package hy
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 
 	"github.com/pkg/errors"
 )
@@ -21,6 +22,28 @@ func (c *Codec) NewSliceNode(base NodeBase) (Node, error) {
 // ChildPathName returns the slice index as a string.
 func (n *SliceNode) ChildPathName(child Node, key, val reflect.Value) string {
 	return fmt.Sprint(key)
+}
+
+func (n *SliceNode) ReadTargets(c ReadContext, key reflect.Value) (reflect.Value, error) {
+	files, err := c.ListFiles()
+	if err != nil {
+		return reflect.Value{}, errors.Wrapf(err, "listing files")
+	}
+	val := reflect.MakeSlice(n.Type, len(files), len(files))
+	for _, keyStr := range files {
+		childContext := c.Push(keyStr)
+		childIndex, err := strconv.Atoi(keyStr)
+		if err != nil {
+			return val, errors.Wrapf(err, "parsing slice file %d", childIndex)
+		}
+		childKey := reflect.ValueOf(childIndex)
+		childVal, err := (*n.ElemNode).Read(childContext, childKey)
+		if err != nil {
+			return reflect.Value{}, errors.Wrapf(err, "reading child %q", keyStr)
+		}
+		val.Index(childIndex).Set(childVal)
+	}
+	return val, nil
 }
 
 // WriteTargets writes all the elements of the slice.

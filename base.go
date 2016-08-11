@@ -46,6 +46,14 @@ func NewNodeBase(id NodeID, parent Node, field *FieldInfo, self *Node) NodeBase 
 	}
 }
 
+func (base NodeBase) Read(c ReadContext, key reflect.Value) (reflect.Value, error) {
+	val, err := (*base.self).ReadTargets(c, key)
+	if base.IsPtr {
+		val = val.Addr()
+	}
+	return val, err
+}
+
 func (base NodeBase) Write(c WriteContext, key, val reflect.Value) error {
 	if base.IsPtr {
 		val = val.Elem()

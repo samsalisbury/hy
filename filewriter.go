@@ -16,6 +16,11 @@ type FileWriter interface {
 	WriteFile(prefix string, target Target) error
 }
 
+// FileReader reads a file at a known path into a target.
+type FileReader interface {
+	ReadFile(prefix string, target Target) error
+}
+
 // FileMarshaler knows how to turn FileTargets into real files.
 type FileMarshaler struct {
 	// MarshalFunc is called to marshal values to bytes.

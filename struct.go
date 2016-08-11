@@ -1,6 +1,7 @@
 package hy
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/pkg/errors"
@@ -11,7 +12,7 @@ type StructNode struct {
 	FileNode
 	// Fields is a map of simple struct field names to their types.
 	Fields map[string]reflect.Type
-	// Children is a map of field named to node pointers.
+	// Children is a map of field name to node pointer.
 	Children map[string]*Node
 }
 
@@ -56,6 +57,32 @@ func (c *Codec) NewStructNode(base NodeBase) (Node, error) {
 func (n *StructNode) ChildPathName(child Node, key, val reflect.Value) string {
 	name, _ := child.FixedPathName()
 	return name
+}
+
+// ReadTargets reads files into values.
+func (n *StructNode) ReadTargets(c ReadContext, key reflect.Value) (reflect.Value, error) {
+	val := reflect.New(n.Type).Elem()
+	valInterface := val.Interface()
+	fieldData, err := c.ReadFile(fmt.Sprint(key))
+	if err != nil {
+		return val, errors.Wrapf(err, "readding own fields")
+	}
+	if len(fieldData) != 0 {
+		if err := c.UnmarshalFunc(valInterface, fieldData); err != nil {
+			return val, errors.Wrapf(err, "unmarshaling %q", c.FilePath())
+		}
+	}
+	for fieldName, child := range n.Children {
+		childPathName, _ := (*child).FixedPathName()
+		childContext := c.Push(childPathName)
+		childKey := reflect.ValueOf(childPathName)
+		childVal, err := (*child).Read(childContext, childKey)
+		if err != nil {
+			return val, errors.Wrapf(err, "reading child %q", childPathName)
+		}
+		val.FieldByName(fieldName).Set(childVal)
+	}
+	return val, nil
 }
 
 // WriteTargets generates file targets.

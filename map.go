@@ -32,6 +32,24 @@ func (n *MapNode) ChildPathName(child Node, key, val reflect.Value) string {
 	return fmt.Sprint(key)
 }
 
+func (n *MapNode) ReadTargets(c ReadContext, key reflect.Value) (reflect.Value, error) {
+	files, err := c.ListFiles()
+	if err != nil {
+		return reflect.Value{}, errors.Wrapf(err, "listing files")
+	}
+	val := reflect.MakeMap(n.Type)
+	for _, keyStr := range files {
+		childContext := c.Push(keyStr)
+		childKey := reflect.ValueOf(keyStr)
+		childVal, err := (*n.ElemNode).Read(childContext, childKey)
+		if err != nil {
+			return reflect.Value{}, errors.Wrapf(err, "reading child %q", keyStr)
+		}
+		val.SetMapIndex(childKey, childVal)
+	}
+	return val, nil
+}
+
 // WriteTargets writes all map elements.
 func (n *MapNode) WriteTargets(c WriteContext, key, val reflect.Value) error {
 	elemNode := *n.ElemNode

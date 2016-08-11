@@ -2,7 +2,7 @@ package hy
 
 import "path"
 
-// WriteContext is context collected during a write opration.
+// WriteContext is context collected during a write operation.
 type WriteContext struct {
 	// Targets is the collected targets in this write context.
 	Targets FileTargets
@@ -17,7 +17,7 @@ func NewWriteContext() WriteContext {
 	return WriteContext{Targets: MakeFileTargets(0)}
 }
 
-// Push creates a derivative node context.
+// Push creates a derivative write context.
 func (c WriteContext) Push(pathName string) WriteContext {
 	return WriteContext{
 		Targets:  c.Targets,

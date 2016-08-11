@@ -28,5 +28,9 @@ type Node interface {
 	// Write writes file targets for this node to the context by first ensuring
 	// val is not a pointer and then calling WriteTargets.
 	Write(c WriteContext, key, val reflect.Value) error
-	//Read(NodeContext)
+	// ReadTargets reads file targets from the context path into its Targets
+	// collection.
+	ReadTargets(c ReadContext, key reflect.Value) (reflect.Value, error)
+	// Read does preliminary work and then delegates to ReadTargets.
+	Read(c ReadContext, key reflect.Value) (reflect.Value, error)
 }
