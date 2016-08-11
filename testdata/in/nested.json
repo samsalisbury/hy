@@ -1,0 +1,12 @@
+{
+  "InlineMap": null,
+  "InlineSlice": null,
+  "Int": 2,
+  "Name": "A nested struct pointer.",
+  "StructB": {
+    "Name": "",
+    "FileSubStruct": null,
+    "DirSubMap": null
+  },
+  "StructBPtr": null
+}

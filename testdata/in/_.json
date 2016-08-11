@@ -1,0 +1,20 @@
+{
+  "InlineMap": {
+    "one": 1,
+    "three": 3,
+    "two": 2
+  },
+  "InlineSlice": [
+    "a",
+    "string",
+    "slice"
+  ],
+  "Int": 1,
+  "Name": "Test struct writing",
+  "StructB": {
+    "Name": "",
+    "FileSubStruct": null,
+    "DirSubMap": null
+  },
+  "StructBPtr": null
+}
