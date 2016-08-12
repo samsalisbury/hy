@@ -1,6 +1,9 @@
 package hy
 
-import "testing"
+import (
+	"encoding/json"
+	"testing"
+)
 
 func TestCodec_Read(t *testing.T) {
 
@@ -14,4 +17,10 @@ func TestCodec_Read(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	b, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Fatal(string(b))
 }
