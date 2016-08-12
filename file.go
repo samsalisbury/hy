@@ -21,6 +21,7 @@ func (n *FileNode) ChildPathName(child Node, key, val reflect.Value) string {
 	return ""
 }
 
+// ReadTargets reads a single file target.
 func (n *FileNode) ReadTargets(c ReadContext, key reflect.Value) (reflect.Value, error) {
 	val := reflect.New(n.Type)
 	err := c.Read(val.Interface())
