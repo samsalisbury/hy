@@ -4,7 +4,7 @@ import "testing"
 
 func TestFileTreeReader_ReadTree(t *testing.T) {
 
-	tr := NewFileTreeReader("json")
+	tr := NewFileTreeReader("json", "_")
 
 	targets, err := tr.ReadTree("testdata/in")
 	if err != nil {

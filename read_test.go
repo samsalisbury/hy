@@ -7,20 +7,19 @@ import (
 )
 
 func TestCodec_Read(t *testing.T) {
+	jsonWriter := JSONWriter
+	jsonWriter.MarshalFunc = func(v interface{}) ([]byte, error) {
+		return json.MarshalIndent(v, "", "  ")
+	}
 	c := NewCodec(func(c *Codec) {
-		c.TreeReader = NewFileTreeReader("json")
-		c.Reader = JSONWriter
-		c.Writer = JSONWriter
+		c.TreeReader = NewFileTreeReader("json", "_")
+		c.Reader = jsonWriter
+		c.Writer = jsonWriter
 	})
 
 	v := TestWriteStruct{}
 
 	if err := c.Read("testdata/in", &v); err != nil {
-		t.Fatal(err)
-	}
-
-	b, err := json.MarshalIndent(v, "", "  ")
-	if err != nil {
 		t.Fatal(err)
 	}
 
@@ -31,5 +30,15 @@ func TestCodec_Read(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Fatal(string(b))
+	v2 := TestWriteStruct{}
+	if err := c.Read("testdata/roundtripped", &v2); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.RemoveAll("testdata/roundtripped2"); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Write("testdata/roundtripped2", &v2); err != nil {
+		t.Fatal(err)
+	}
 }

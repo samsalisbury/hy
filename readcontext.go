@@ -1,7 +1,6 @@
 package hy
 
 import (
-	"log"
 	"path"
 	"path/filepath"
 	"sort"
@@ -51,14 +50,6 @@ func (c ReadContext) List() []string {
 		}
 		p := strings.TrimPrefix(path, trim)
 		p = filepath.Base(p)
-		if p == "" { //|| strings.ContainsRune(p, os.PathSeparator) {
-			continue
-		}
-
-		if p == "_" {
-			p = ""
-		}
-		log.Println(">    ", p)
 		set[p] = struct{}{}
 	}
 	l := make([]string, len(set))

@@ -14,16 +14,16 @@ type FileTreeReader struct {
 	FileExtension string
 	// Prefix is the path prefix.
 	Prefix string
-	// Targets is the collection of discovered targets.
-	Targets FileTargets
+	// RootFileName is the root file name.
+	RootFileName string
 }
 
 // NewFileTreeReader returns a new FileTreeReader configured to consider files
 // with extension ext.
-func NewFileTreeReader(ext string) *FileTreeReader {
+func NewFileTreeReader(ext, rootFileName string) *FileTreeReader {
 	return &FileTreeReader{
 		FileExtension: ext,
-		Targets:       MakeFileTargets(0),
+		RootFileName:  rootFileName,
 	}
 }
 
@@ -31,24 +31,30 @@ func NewFileTreeReader(ext string) *FileTreeReader {
 // with extension FileExtension found in the tree.
 func (ftr *FileTreeReader) ReadTree(prefix string) (FileTargets, error) {
 	ftr.Prefix = prefix
-	if err := filepath.Walk(prefix, ftr.WalkFunc); err != nil {
-		return ftr.Targets, errors.Wrapf(err, "walking tree")
+	targets := MakeFileTargets(0)
+	if err := filepath.Walk(prefix, ftr.MakeWalkFunc(targets)); err != nil {
+		return targets, errors.Wrapf(err, "walking tree")
 	}
-	return ftr.Targets, nil
+	return targets, nil
 }
 
-// WalkFunc processes a single filesystem object.
-func (ftr *FileTreeReader) WalkFunc(p string, fi os.FileInfo, err error) error {
-	if err != nil || fi.IsDir() || filepath.Ext(p) != "."+ftr.FileExtension {
-		return err
+// MakeWalkFunc makes a func to process a single filesystem object.
+func (ftr *FileTreeReader) MakeWalkFunc(targets FileTargets) filepath.WalkFunc {
+	return func(p string, fi os.FileInfo, err error) error {
+		if err != nil || fi.IsDir() || filepath.Ext(p) != "."+ftr.FileExtension {
+			return err
+		}
+		path := strings.TrimPrefix(p, ftr.Prefix+"/")
+		if path == "" {
+			return nil
+		}
+		path = strings.TrimSuffix(path, "."+ftr.FileExtension)
+		if path == ftr.RootFileName {
+			path = ""
+		}
+		t := &FileTarget{
+			FilePath: path,
+		}
+		return errors.Wrapf(targets.Add(t), "adding file target %q", p)
 	}
-	path, err := filepath.Rel(ftr.Prefix, p)
-	if err != nil {
-		return errors.Wrapf(err, "getting relative path")
-	}
-	path = strings.TrimSuffix(path, "."+ftr.FileExtension)
-	t := &FileTarget{
-		FilePath: path,
-	}
-	return errors.Wrapf(ftr.Targets.Add(t), "adding file target %q", p)
 }
