@@ -1,5 +1,11 @@
 # hy: hierarchical files
 
+[![CircleCI](https://circleci.com/gh/opentable/hy.svg?style=svg)](https://circleci.com/gh/opentable/hy)
+[![codecov](https://codecov.io/gh/opentable/hy/branch/master/graph/badge.svg)](https://codecov.io/gh/opentable/hy)
+[![Go Report Card](https://goreportcard.com/badge/github.com/opentable/hy)](https://goreportcard.com/report/github.com/opentable/hy)
+[![GoDoc](https://godoc.org/github.com/opentable/hy?status.svg)](https://godoc.org/github.com/opentable/hy)
+[![License MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 ## TODO
 - Improve memory efficiency (currently loads everything eagerly in-memory).
 - Add options for default path names:
