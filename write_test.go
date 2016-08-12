@@ -48,21 +48,21 @@ var testWriteStructData = TestWriteStruct{
 		MapOfPtr: map[string]*StructB{
 			"a-nil-file":           nil,
 			"another-nil-file":     nil,
-			"this-one-has-a-value": &StructB{},
+			"this-one-has-a-value": {},
 		},
 		Map: map[string]StructB{
 			// Notice how we don't set the Name field here. Hy sets it in the write
 			// data because of the ",Name" tag.
-			"a-zero-file":       StructB{},
-			"another-zero-file": StructB{},
+			"a-zero-file":       {},
+			"another-zero-file": {},
 		},
 	},
 	Slice: []StructB{{Name: "One"}, {Name: "Two"}},
 	Map: map[string]StructB{
 		// Notice how we don't set the Name field here. Hy sets it in the write
 		// data because of the ",Name" tag.
-		"First":  StructB{},
-		"Second": StructB{},
+		"First":  {},
+		"Second": {},
 	},
 }
 
