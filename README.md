@@ -1,12 +1,12 @@
 # hy: hierarchical files
 
 ## TODO
+- Improve memory efficiency (currently loads everything eagerly in-memory).
 - Add options for default path names:
   - lowerCamelCase
   - CamelCase
   - snake_case
   - lowercaseonly
-- Add support for reading FileTargets.
 - Add support for auto-filling ID fields in map/slice elements on read.
   - Default field:  ID string
   - Default getter: ID() string
