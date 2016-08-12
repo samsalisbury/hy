@@ -146,7 +146,7 @@ func removePointer(t reflect.Type) reflect.Type {
 
 // Validate returns any validation errors with this FieldInfo.
 func (fi *FieldInfo) Validate() error {
-	if err := fi.validateKeyFild(); err != nil {
+	if err := fi.validateKeyField(); err != nil {
 		return errors.Wrapf(err, "reading key field name")
 	}
 	//if err := validateName(fi.GetKeyName); err != nil {
@@ -158,7 +158,7 @@ func (fi *FieldInfo) Validate() error {
 	return nil
 }
 
-func (fi *FieldInfo) validateKeyFild() error {
+func (fi *FieldInfo) validateKeyField() error {
 	if fi.KeyField == "" {
 		return nil
 	}
@@ -191,7 +191,6 @@ func (fi *FieldInfo) validateKeyFild() error {
 	fi.SetKeyFunc = reflect.MakeFunc(setFuncType, func(in []reflect.Value) []reflect.Value {
 		elem := in[0].Elem()
 		if !elem.IsValid() {
-			//panic("INVALID VALUE OF TYPE: " + elem.Type().String())
 			return nil
 		}
 		in[0].Elem().FieldByName(fi.KeyField).Set(in[1])
