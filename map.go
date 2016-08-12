@@ -2,6 +2,7 @@ package hy
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 
 	"github.com/pkg/errors"
@@ -34,9 +35,10 @@ func (n *MapNode) ChildPathName(child Node, key, val reflect.Value) string {
 
 // ReadTargets reads targets into map entries.
 func (n *MapNode) ReadTargets(c ReadContext, key reflect.Value) (reflect.Value, error) {
-	val := reflect.New(n.Type).Elem()
+	val := reflect.MakeMap(n.Type)
 	list := c.List()
 	for _, keyStr := range list {
+		log.Println("LIST ITEM:", keyStr)
 		elemKey := reflect.ValueOf(keyStr)
 		elem := *n.ElemNode
 		elemContext := c.Push(keyStr)

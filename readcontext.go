@@ -2,9 +2,9 @@ package hy
 
 import (
 	"log"
-	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -41,24 +41,34 @@ func (c ReadContext) Push(pathName string) ReadContext {
 }
 
 // List lists files in the current directory.
+// TODO: This is horrible, need a tree file structure for targets.
 func (c ReadContext) List() []string {
-	l := []string{}
-	for path := range c.targets.Snapshot() {
-		if !strings.HasPrefix(path, c.Path()) {
+	set := map[string]struct{}{}
+	trim := c.Path()
+	log.Println("LISTING FROM:", trim)
+	for _, path := range c.targets.Paths() {
+		if !strings.HasPrefix(path, trim) {
 			continue
 		}
-		p, err := filepath.Rel(path, c.Path())
-		if err != nil {
-			panic(err)
-		}
-		if p == "" || strings.ContainsRune(p, os.PathSeparator) {
+		p := strings.TrimPrefix(path, trim)
+		p = filepath.Base(p)
+		if p == "" { //|| strings.ContainsRune(p, os.PathSeparator) {
 			continue
 		}
+
 		if p == "_" {
 			p = ""
 		}
-		l = append(l, p)
+		log.Println(">    ", p)
+		set[p] = struct{}{}
 	}
+	l := make([]string, len(set))
+	i := 0
+	for pathName := range set {
+		l[i] = pathName
+		i++
+	}
+	sort.Strings(l)
 	return l
 }
 
@@ -66,16 +76,16 @@ func (c ReadContext) Read(v interface{}) error {
 	if !c.Exists() {
 		return nil
 	}
-	filePath := filepath.Join(c.Prefix, c.Path())
-	return errors.Wrapf(c.Reader.ReadFile(filePath, v), "reading %q", c.Path())
+	return errors.Wrapf(c.Reader.ReadFile(c.Prefix, c.Path(), v), "reading %q", c.Path())
 }
 
 // Exists checks that a file exists at the current path.
 func (c ReadContext) Exists() bool {
-	log.Printf("CHECKING EXISTENCE %q\n", c.Path())
 	_, ok := c.targets.Snapshot()[c.Path()]
-	log.Println(c.targets.Paths())
-	return ok
+	if ok {
+		return true
+	}
+	return len(c.List()) != 0
 }
 
 // Path returns the path of this context.

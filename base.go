@@ -1,7 +1,6 @@
 package hy
 
 import (
-	"log"
 	"reflect"
 
 	"github.com/pkg/errors"
@@ -52,7 +51,6 @@ func NewNodeBase(id NodeID, parent Node, field *FieldInfo, self *Node) NodeBase 
 }
 
 func (base NodeBase) Read(c ReadContext, key reflect.Value) (reflect.Value, error) {
-	log.Println("READING:", c.Path())
 	v, err := (*base.self).ReadTargets(c, key)
 	if err != nil {
 		return v, errors.Wrapf(err, "reading node")

@@ -26,8 +26,8 @@ func (n *SliceNode) ChildPathName(child Node, key, val reflect.Value) string {
 
 // ReadTargets reads targets into slice indicies.
 func (n *SliceNode) ReadTargets(c ReadContext, key reflect.Value) (reflect.Value, error) {
-	val := reflect.New(n.Type).Elem() // TODO: Maybe use MakeSlice
 	list := c.List()
+	val := reflect.MakeSlice(n.Type, len(list), len(list))
 	for _, indexStr := range list {
 		index, err := strconv.Atoi(indexStr)
 		if err != nil {
@@ -41,7 +41,7 @@ func (n *SliceNode) ReadTargets(c ReadContext, key reflect.Value) (reflect.Value
 			return val, errors.Wrapf(err, "reading index %d", index)
 		}
 		reflect.Append(val, elemVal)
-		val.SetMapIndex(elemKey, elemVal)
+		val.Index(index).Set(elemVal)
 	}
 	return val, nil
 }

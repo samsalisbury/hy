@@ -10,6 +10,7 @@ func TestCodec_Read(t *testing.T) {
 	c := NewCodec(func(c *Codec) {
 		c.TreeReader = NewFileTreeReader("json")
 		c.Reader = JSONWriter
+		c.Writer = JSONWriter
 	})
 
 	v := TestWriteStruct{}
@@ -20,6 +21,10 @@ func TestCodec_Read(t *testing.T) {
 
 	b, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := c.Write("testdata/roundtripped", v); err != nil {
 		t.Fatal(err)
 	}
 
