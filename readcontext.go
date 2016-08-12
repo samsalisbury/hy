@@ -85,9 +85,3 @@ func (c ReadContext) Path() string {
 	}
 	return path.Join(c.Parent.Path(), c.PathName)
 }
-
-// SetValue sets the value of the current path.
-func (c ReadContext) SetValue(v interface{}) error {
-	t := &FileTarget{FilePath: c.Path(), Value: v}
-	return errors.Wrapf(c.targets.Add(t), "setting value at %q", c.Path())
-}

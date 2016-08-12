@@ -84,11 +84,6 @@ func (base NodeBase) PathName(key, val reflect.Value) string {
 	return base.Parent.ChildPathName(*base.self, key, val)
 }
 
-// GetTag returns the tag associated with this node.
-func (base NodeBase) GetTag() Tag {
-	return base.Field.Tag
-}
-
 // FixedPathName returns the fixed path name of this node.
 // If there is no fixed path name, returns empty string and false.
 // Otherwise returns the fixed path name and true.

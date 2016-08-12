@@ -67,7 +67,7 @@ func (n *StructNode) ReadTargets(c ReadContext, key reflect.Value) (reflect.Valu
 	val = val.Elem()
 	for fieldName, childPtr := range n.Children {
 		child := *childPtr
-		childPathName, _ := child.FixedPathName()
+		childPathName := child.PathName(reflect.Value{}, reflect.Value{})
 		childContext := c.Push(childPathName)
 		if !childContext.Exists() {
 			continue

@@ -45,9 +45,6 @@ func (ftr *FileTreeReader) MakeWalkFunc(targets FileTargets) filepath.WalkFunc {
 			return err
 		}
 		path := strings.TrimPrefix(p, ftr.Prefix+"/")
-		if path == "" {
-			return nil
-		}
 		path = strings.TrimSuffix(path, "."+ftr.FileExtension)
 		if path == ftr.RootFileName {
 			path = ""
