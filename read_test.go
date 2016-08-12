@@ -2,11 +2,11 @@ package hy
 
 import (
 	"encoding/json"
+	"os"
 	"testing"
 )
 
 func TestCodec_Read(t *testing.T) {
-
 	c := NewCodec(func(c *Codec) {
 		c.TreeReader = NewFileTreeReader("json")
 		c.Reader = JSONWriter
@@ -24,6 +24,9 @@ func TestCodec_Read(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	if err := os.RemoveAll("testdata/roundtripped"); err != nil {
+		t.Fatal(err)
+	}
 	if err := c.Write("testdata/roundtripped", v); err != nil {
 		t.Fatal(err)
 	}

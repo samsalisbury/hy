@@ -44,8 +44,7 @@ func (c ReadContext) Push(pathName string) ReadContext {
 // TODO: This is horrible, need a tree file structure for targets.
 func (c ReadContext) List() []string {
 	set := map[string]struct{}{}
-	trim := c.Path()
-	log.Println("LISTING FROM:", trim)
+	trim := c.Path() + "/"
 	for _, path := range c.targets.Paths() {
 		if !strings.HasPrefix(path, trim) {
 			continue
