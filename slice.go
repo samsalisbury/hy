@@ -3,6 +3,7 @@ package hy
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 
 	"github.com/pkg/errors"
 )
@@ -21,6 +22,28 @@ func (c *Codec) NewSliceNode(base NodeBase) (Node, error) {
 // ChildPathName returns the slice index as a string.
 func (n *SliceNode) ChildPathName(child Node, key, val reflect.Value) string {
 	return fmt.Sprint(key)
+}
+
+// ReadTargets reads targets into slice indicies.
+func (n *SliceNode) ReadTargets(c ReadContext, key reflect.Value) (reflect.Value, error) {
+	val := reflect.New(n.Type).Elem() // TODO: Maybe use MakeSlice
+	list := c.List()
+	for _, indexStr := range list {
+		index, err := strconv.Atoi(indexStr)
+		if err != nil {
+			return val, errors.Wrapf(err, "converting %q to int", indexStr)
+		}
+		elemKey := reflect.ValueOf(index)
+		elem := *n.ElemNode
+		elemContext := c.Push(indexStr)
+		elemVal, err := elem.Read(elemContext, elemKey)
+		if err != nil {
+			return val, errors.Wrapf(err, "reading index %d", index)
+		}
+		reflect.Append(val, elemVal)
+		val.SetMapIndex(elemKey, elemVal)
+	}
+	return val, nil
 }
 
 // WriteTargets writes all the elements of the slice.

@@ -32,6 +32,23 @@ func (n *MapNode) ChildPathName(child Node, key, val reflect.Value) string {
 	return fmt.Sprint(key)
 }
 
+// ReadTargets reads targets into map entries.
+func (n *MapNode) ReadTargets(c ReadContext, key reflect.Value) (reflect.Value, error) {
+	val := reflect.New(n.Type).Elem()
+	list := c.List()
+	for _, keyStr := range list {
+		elemKey := reflect.ValueOf(keyStr)
+		elem := *n.ElemNode
+		elemContext := c.Push(keyStr)
+		elemVal, err := elem.Read(elemContext, elemKey)
+		if err != nil {
+			return val, errors.Wrapf(err, "reading child %s", keyStr)
+		}
+		val.SetMapIndex(elemKey, elemVal)
+	}
+	return val, nil
+}
+
 // WriteTargets writes all map elements.
 func (n *MapNode) WriteTargets(c WriteContext, key, val reflect.Value) error {
 	elemNode := *n.ElemNode

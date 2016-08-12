@@ -1,6 +1,11 @@
 package hy
 
-import "reflect"
+import (
+	"log"
+	"reflect"
+
+	"github.com/pkg/errors"
+)
 
 // NodeBase is a node in an analysis.
 type NodeBase struct {
@@ -44,6 +49,18 @@ func NewNodeBase(id NodeID, parent Node, field *FieldInfo, self *Node) NodeBase 
 		HasKey: k == reflect.Map || k == reflect.Slice,
 		self:   self,
 	}
+}
+
+func (base NodeBase) Read(c ReadContext, key reflect.Value) (reflect.Value, error) {
+	log.Println("READING:", c.Path())
+	v, err := (*base.self).ReadTargets(c, key)
+	if err != nil {
+		return v, errors.Wrapf(err, "reading node")
+	}
+	if base.IsPtr {
+		v = v.Addr()
+	}
+	return v, nil
 }
 
 func (base NodeBase) Write(c WriteContext, key, val reflect.Value) error {

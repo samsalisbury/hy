@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/pkg/errors"
 )
@@ -14,6 +15,15 @@ type FileWriter interface {
 	// WriteFile writes a file representing target, by joining prefix with
 	// Target.Path()
 	WriteFile(prefix string, target WriteTarget) error
+}
+
+type TargetReader interface {
+	ReadTarget(target ReadTarget, v interface{}) error
+}
+
+// FileReader reads data from prefix + target.Path() into target.Data.
+type FileReader interface {
+	ReadFile(prefix string, target ReadTarget, v interface{}) error
 }
 
 // FileMarshaler knows how to turn FileTargets into real files.
@@ -36,6 +46,18 @@ var JSONWriter = FileMarshaler{
 	UnmarshalFunc: json.Unmarshal,
 	FileExtension: "json",
 	RootFileName:  "_",
+}
+
+// ReadFile reads a file at prefix + t.Path into v.
+func (fm FileMarshaler) ReadFile(prefix string, t ReadTarget, v interface{}) error {
+	b, err := ioutil.ReadFile(filepath.Join(prefix, t.Path()) + "." + fm.FileExtension)
+	if err != nil {
+		return errors.Wrapf(err, "reading target %q", t.Path())
+	}
+	if err := fm.UnmarshalFunc(b, v); err != nil {
+		return errors.Wrapf(err, "unmarshaling %q", t.Path())
+	}
+	return nil
 }
 
 // WriteFile writes a file based on t.

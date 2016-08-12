@@ -58,6 +58,29 @@ func (n *StructNode) ChildPathName(child Node, key, val reflect.Value) string {
 	return name
 }
 
+// ReadTargets reads targets into struct fields.
+func (n *StructNode) ReadTargets(c ReadContext, key reflect.Value) (reflect.Value, error) {
+	val := reflect.New(n.Type)
+	if err := c.Read(val.Interface()); err != nil {
+		return val, errors.Wrapf(err, "reading struct fields")
+	}
+	val = val.Elem()
+	for fieldName, childPtr := range n.Children {
+		child := *childPtr
+		childPathName, _ := child.FixedPathName()
+		childContext := c.Push(childPathName)
+		if !childContext.Exists() {
+			continue
+		}
+		childVal, err := child.Read(childContext, reflect.Value{})
+		if err != nil {
+			return val, errors.Wrapf(err, "reading child %s", fieldName)
+		}
+		val.FieldByName(fieldName).Set(childVal)
+	}
+	return val, nil
+}
+
 // WriteTargets generates file targets.
 func (n *StructNode) WriteTargets(c WriteContext, key, val reflect.Value) error {
 	if err := c.SetValue(n.prepareFileData(val)); err != nil {
