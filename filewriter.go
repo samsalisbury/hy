@@ -13,7 +13,7 @@ import (
 type FileWriter interface {
 	// WriteFile writes a file representing target, by joining prefix with
 	// Target.Path()
-	WriteFile(prefix string, target Target) error
+	WriteFile(prefix string, target WriteTarget) error
 }
 
 // FileMarshaler knows how to turn FileTargets into real files.
@@ -39,7 +39,7 @@ var JSONWriter = FileMarshaler{
 }
 
 // WriteFile writes a file based on t.
-func (fm FileMarshaler) WriteFile(prefix string, t Target) error {
+func (fm FileMarshaler) WriteFile(prefix string, t WriteTarget) error {
 	p := t.Path()
 	if p == "" {
 		p = fm.RootFileName
