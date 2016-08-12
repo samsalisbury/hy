@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"path/filepath"
 
 	"github.com/pkg/errors"
 )
@@ -17,13 +16,9 @@ type FileWriter interface {
 	WriteFile(prefix string, target WriteTarget) error
 }
 
-type TargetReader interface {
-	ReadTarget(target ReadTarget, v interface{}) error
-}
-
 // FileReader reads data from prefix + target.Path() into target.Data.
 type FileReader interface {
-	ReadFile(prefix string, target ReadTarget, v interface{}) error
+	ReadFile(filePath string, v interface{}) error
 }
 
 // FileMarshaler knows how to turn FileTargets into real files.
@@ -49,13 +44,13 @@ var JSONWriter = FileMarshaler{
 }
 
 // ReadFile reads a file at prefix + t.Path into v.
-func (fm FileMarshaler) ReadFile(prefix string, t ReadTarget, v interface{}) error {
-	b, err := ioutil.ReadFile(filepath.Join(prefix, t.Path()) + "." + fm.FileExtension)
+func (fm FileMarshaler) ReadFile(filePath string, v interface{}) error {
+	b, err := ioutil.ReadFile(filePath + "." + fm.FileExtension)
 	if err != nil {
-		return errors.Wrapf(err, "reading target %q", t.Path())
+		return errors.Wrapf(err, "reading target file %q", filePath)
 	}
 	if err := fm.UnmarshalFunc(b, v); err != nil {
-		return errors.Wrapf(err, "unmarshaling %q", t.Path())
+		return errors.Wrapf(err, "unmarshaling %q", filePath)
 	}
 	return nil
 }

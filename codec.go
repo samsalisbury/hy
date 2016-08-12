@@ -10,6 +10,7 @@ import (
 type Codec struct {
 	nodes      NodeSet
 	Writer     FileWriter
+	Reader     FileReader
 	TreeReader *FileTreeReader
 }
 
@@ -23,6 +24,24 @@ func NewCodec(configure ...func(*Codec)) *Codec {
 		c.Writer = JSONWriter
 	}
 	return c
+}
+
+func (c *Codec) Read(prefix string, root interface{}) error {
+	rootNode, err := c.Analyse(root)
+	if err != nil {
+		return errors.Wrapf(err, "analysing structure")
+	}
+	targets, err := c.TreeReader.ReadTree(prefix)
+	if err != nil {
+		return errors.Wrapf(err, "reading tree at %q", prefix)
+	}
+	rc := NewReadContext(prefix, targets, c.Reader)
+	val, err := rootNode.Read(rc, reflect.Value{})
+	if err != nil {
+		return errors.Wrapf(err, "reading root")
+	}
+	reflect.ValueOf(root).Elem().Set(val.Elem())
+	return nil
 }
 
 func (c *Codec) Write(prefix string, root interface{}) error {
@@ -40,24 +59,6 @@ func (c *Codec) Write(prefix string, root interface{}) error {
 			return errors.Wrapf(err, "writing target %q", t.Path())
 		}
 	}
-	return nil
-}
-
-func (c *Codec) Read(prefix string, root interface{}) error {
-	rootNode, err := c.Analyse(root)
-	if err != nil {
-		return errors.Wrapf(err, "analysing structure")
-	}
-	targets, err := c.TreeReader.ReadTree(prefix)
-	if err != nil {
-		return errors.Wrapf(err, "reading tree at %q", prefix)
-	}
-	rc := NewReadContext(targets)
-	val, err := rootNode.Read(rc, reflect.Value{})
-	if err != nil {
-		return errors.Wrapf(err, "reading root")
-	}
-	reflect.ValueOf(root).Elem().Set(val.Elem())
 	return nil
 }
 

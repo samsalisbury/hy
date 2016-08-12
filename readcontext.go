@@ -1,8 +1,10 @@
 package hy
 
 import (
+	"log"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -23,8 +25,8 @@ type ReadContext struct {
 }
 
 // NewReadContext returns a new read context.
-func NewReadContext(targets FileTargets) ReadContext {
-	return ReadContext{targets: targets}
+func NewReadContext(prefix string, targets FileTargets, reader FileReader) ReadContext {
+	return ReadContext{Prefix: prefix, targets: targets, Reader: reader}
 }
 
 // Push creates a derivative node context.
@@ -45,7 +47,10 @@ func (c ReadContext) List() []string {
 		if !strings.HasPrefix(path, c.Path()) {
 			continue
 		}
-		p := strings.TrimPrefix(path, c.Path())
+		p, err := filepath.Rel(path, c.Path())
+		if err != nil {
+			panic(err)
+		}
 		if p == "" || strings.ContainsRune(p, os.PathSeparator) {
 			continue
 		}
@@ -58,16 +63,18 @@ func (c ReadContext) List() []string {
 }
 
 func (c ReadContext) Read(v interface{}) error {
-	t, ok := c.targets.Snapshot()[c.Path()]
-	if !ok {
+	if !c.Exists() {
 		return nil
 	}
-	return errors.Wrapf(c.Reader.ReadFile(c.Prefix, t, v), "reading %q", c.Path())
+	filePath := filepath.Join(c.Prefix, c.Path())
+	return errors.Wrapf(c.Reader.ReadFile(filePath, v), "reading %q", c.Path())
 }
 
 // Exists checks that a file exists at the current path.
 func (c ReadContext) Exists() bool {
+	log.Printf("CHECKING EXISTENCE %q\n", c.Path())
 	_, ok := c.targets.Snapshot()[c.Path()]
+	log.Println(c.targets.Paths())
 	return ok
 }
 

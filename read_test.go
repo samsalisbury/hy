@@ -9,6 +9,7 @@ func TestCodec_Read(t *testing.T) {
 
 	c := NewCodec(func(c *Codec) {
 		c.TreeReader = NewFileTreeReader("json")
+		c.Reader = JSONWriter
 	})
 
 	v := TestWriteStruct{}

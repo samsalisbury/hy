@@ -42,8 +42,11 @@ func (ftr *FileTreeReader) WalkFunc(p string, fi os.FileInfo, err error) error {
 	if err != nil || fi.IsDir() || filepath.Ext(p) != "."+ftr.FileExtension {
 		return err
 	}
-	path := strings.TrimPrefix(strings.TrimSuffix(p, "."+ftr.FileExtension),
-		ftr.Prefix)
+	path, err := filepath.Rel(ftr.Prefix, p)
+	if err != nil {
+		return errors.Wrapf(err, "getting relative path")
+	}
+	path = strings.TrimSuffix(path, "."+ftr.FileExtension)
 	t := &FileTarget{
 		FilePath: path,
 	}
