@@ -1,6 +1,9 @@
 package hy
 
-import "reflect"
+import (
+	"log"
+	"reflect"
+)
 
 // Val wraps a reflect.Value which is a pointer.
 type Val struct {
@@ -29,7 +32,11 @@ func (v Val) IsZero() bool {
 }
 
 func (v Val) ShouldWrite() bool {
-	return v.Key.IsValid() || !v.IsZero()
+	r := !v.IsZero() || v.Base.HasKey
+	if !r {
+		log.Println("SHOULD NOT WRITE %v", v.Ptr.Interface())
+	}
+	return r
 }
 
 func (v Val) SetField(name string, val Val) {
@@ -61,7 +68,7 @@ func (v Val) SliceElements(elemNode Node) []Val {
 	s := v.Ptr.Elem()
 	vals := make([]Val, s.Len())
 	for i := 0; i < s.Len(); i++ {
-		vals[i] = elemNode.NewKeyedVal(reflect.ValueOf(i))
+		vals[i] = elemNode.NewKeyedValFrom(reflect.ValueOf(i), s.Index(i))
 	}
 	return vals
 }

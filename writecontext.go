@@ -1,8 +1,8 @@
 package hy
 
 import (
+	"log"
 	"path"
-	"reflect"
 
 	"github.com/pkg/errors"
 )
@@ -42,17 +42,15 @@ func (c WriteContext) Path() string {
 // SetValue sets the value of the current path.
 func (c WriteContext) SetValue(val Val) error {
 	if !val.ShouldWrite() {
+		log.Printf("SHOULD NOT WRITE %+v\n", val.Final())
 		return nil
 	}
-	t := &FileTarget{FilePath: c.Path(), Value: val.Final()}
+	t := &FileTarget{FilePath: c.Path(), Value: val.Final().Interface()}
 	return errors.Wrapf(c.targets.Add(t), "setting value at %q", c.Path())
 }
 
 // SetRawValue sets the raw value of the current path.
-func (c WriteContext) SetRawValue(v reflect.Value) error {
-	if !v.IsValid() || v.IsNil() {
-		return nil
-	}
+func (c WriteContext) SetRawValue(v interface{}) error {
 	t := &FileTarget{FilePath: c.Path(), Value: v}
 	return errors.Wrapf(c.targets.Add(t), "setting value at %q", c.Path())
 }

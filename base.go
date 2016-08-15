@@ -1,6 +1,7 @@
 package hy
 
 import (
+	"log"
 	"reflect"
 
 	"github.com/pkg/errors"
@@ -32,9 +33,9 @@ func (base NodeBase) ID() NodeID {
 
 // NewNodeBase returns a new NodeBase.
 func NewNodeBase(id NodeID, parent Node, field *FieldInfo, self *Node) NodeBase {
-	var k reflect.Kind
+	var parentKind reflect.Kind
 	if parent != nil {
-		k = parent.ID().Type.Kind()
+		parentKind = parent.ID().Type.Kind()
 	}
 	var zero interface{}
 	if !id.IsPtr {
@@ -45,7 +46,7 @@ func NewNodeBase(id NodeID, parent Node, field *FieldInfo, self *Node) NodeBase 
 		Parent: parent,
 		Field:  field,
 		Zero:   zero,
-		HasKey: k == reflect.Map || k == reflect.Slice,
+		HasKey: parentKind == reflect.Map || parentKind == reflect.Slice,
 		self:   self,
 	}
 }
@@ -98,8 +99,8 @@ func (base NodeBase) Read(c ReadContext, val Val) error {
 }
 
 func (base NodeBase) Write(c WriteContext, val Val) error {
-	// Don't write zero values unless they have a key.
-	if !base.HasKey && val.IsZero() {
+	if !val.ShouldWrite() {
+		log.Printf("SHOULD NOT WRITE %+v\n", val.Final())
 		return nil
 	}
 	return (*base.self).WriteTargets(c, val)

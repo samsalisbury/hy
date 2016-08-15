@@ -2,6 +2,7 @@ package hy
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 
 	"github.com/pkg/errors"
@@ -51,12 +52,18 @@ func (n *MapNode) ReadTargets(c ReadContext, val Val) error {
 
 // WriteTargets writes all map elements.
 func (n *MapNode) WriteTargets(c WriteContext, val Val) error {
+	if !val.ShouldWrite() {
+		return nil
+	}
 	elemNode := *n.ElemNode
 	for _, elemVal := range val.MapElements(elemNode) {
 		if n.Field != nil && n.Field.KeyField != "" {
 			n.Field.SetKeyFunc.Call([]reflect.Value{elemVal.Ptr, elemVal.Key})
 		}
 		childContext := c.Push(elemNode.PathName(elemVal))
+		if elemVal.IsZero() {
+			log.Println("WRITING ZERO ELEMENT TO", childContext.Path())
+		}
 		if err := elemNode.Write(childContext, elemVal); err != nil {
 			return errors.Wrapf(err, "writing map index %q failed",
 				fmt.Sprint(elemVal.Key))

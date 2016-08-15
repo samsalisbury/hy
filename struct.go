@@ -1,6 +1,7 @@
 package hy
 
 import (
+	"log"
 	"reflect"
 
 	"github.com/pkg/errors"
@@ -82,13 +83,20 @@ func (n *StructNode) ReadTargets(c ReadContext, val Val) error {
 
 // WriteTargets generates file targets.
 func (n *StructNode) WriteTargets(c WriteContext, val Val) error {
-	if fieldData := n.prepareFileData(val); fieldData.IsValid() {
-		if err := c.SetRawValue(fieldData); err != nil {
-			return errors.Wrap(err, "writing self")
-		}
+	if val.IsZero() {
+		log.Println("WRITING ZERO STRUCT")
+	}
+	if !val.ShouldWrite() {
+		log.Println("NAAAT")
+		return nil
+	}
+	fieldData := n.prepareFileData(val)
+	if err := c.SetRawValue(fieldData); err != nil {
+		return errors.Wrap(err, "writing self")
 	}
 	if val.IsZero() {
-		return nil
+		log.Println("UN-ZEROING")
+		val = n.NewVal()
 	}
 	for name, childPtr := range n.Children {
 		childNode := *childPtr
@@ -105,13 +113,13 @@ func (n *StructNode) WriteTargets(c WriteContext, val Val) error {
 	return nil
 }
 
-func (n *StructNode) prepareFileData(val Val) reflect.Value {
+func (n *StructNode) prepareFileData(val Val) interface{} {
 	if val.IsZero() {
-		return reflect.Value{}
+		return nil
 	}
 	out := make(map[string]interface{}, len(n.Fields))
 	for name := range n.Fields {
 		out[name] = val.GetField(name).Interface()
 	}
-	return reflect.ValueOf(out)
+	return out
 }
