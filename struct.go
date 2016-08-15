@@ -1,7 +1,6 @@
 package hy
 
 import (
-	"log"
 	"reflect"
 
 	"github.com/pkg/errors"
@@ -83,11 +82,7 @@ func (n *StructNode) ReadTargets(c ReadContext, val Val) error {
 
 // WriteTargets generates file targets.
 func (n *StructNode) WriteTargets(c WriteContext, val Val) error {
-	if val.IsZero() {
-		log.Println("WRITING ZERO STRUCT")
-	}
 	if !val.ShouldWrite() {
-		log.Println("NAAAT")
 		return nil
 	}
 	fieldData := n.prepareFileData(val)
@@ -95,7 +90,6 @@ func (n *StructNode) WriteTargets(c WriteContext, val Val) error {
 		return errors.Wrap(err, "writing self")
 	}
 	if val.IsZero() {
-		log.Println("UN-ZEROING")
 		val = n.NewVal()
 	}
 	for name, childPtr := range n.Children {

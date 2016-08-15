@@ -1,7 +1,6 @@
 package hy
 
 import (
-	"log"
 	"path"
 
 	"github.com/pkg/errors"
@@ -42,7 +41,6 @@ func (c WriteContext) Path() string {
 // SetValue sets the value of the current path.
 func (c WriteContext) SetValue(val Val) error {
 	if !val.ShouldWrite() {
-		log.Printf("SHOULD NOT WRITE %+v\n", val.Final())
 		return nil
 	}
 	t := &FileTarget{FilePath: c.Path(), Value: val.Final().Interface()}

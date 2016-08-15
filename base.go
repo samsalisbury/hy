@@ -1,7 +1,6 @@
 package hy
 
 import (
-	"log"
 	"reflect"
 
 	"github.com/pkg/errors"
@@ -100,7 +99,6 @@ func (base NodeBase) Read(c ReadContext, val Val) error {
 
 func (base NodeBase) Write(c WriteContext, val Val) error {
 	if !val.ShouldWrite() {
-		log.Printf("SHOULD NOT WRITE %+v\n", val.Final())
 		return nil
 	}
 	return (*base.self).WriteTargets(c, val)

@@ -1,7 +1,6 @@
 package hy
 
 import (
-	"log"
 	"reflect"
 )
 
@@ -32,11 +31,7 @@ func (v Val) IsZero() bool {
 }
 
 func (v Val) ShouldWrite() bool {
-	r := !v.IsZero() || v.Base.HasKey
-	if !r {
-		log.Println("SHOULD NOT WRITE %v", v.Ptr.Interface())
-	}
-	return r
+	return !v.IsZero() || v.Base.HasKey
 }
 
 func (v Val) SetField(name string, val Val) {
