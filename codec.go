@@ -36,11 +36,11 @@ func (c *Codec) Read(prefix string, root interface{}) error {
 		return errors.Wrapf(err, "reading tree at %q", prefix)
 	}
 	rc := NewReadContext(prefix, targets, c.Reader)
-	val, err := rootNode.Read(rc, reflect.Value{})
-	if err != nil {
+	rootVal := rootNode.NewVal()
+	if err := rootNode.Read(rc, rootVal); err != nil {
 		return errors.Wrapf(err, "reading root")
 	}
-	reflect.ValueOf(root).Elem().Set(val.Elem())
+	reflect.ValueOf(root).Elem().Set(rootVal.Ptr.Elem())
 	return nil
 }
 
@@ -51,7 +51,8 @@ func (c *Codec) Write(prefix string, root interface{}) error {
 	}
 	wc := NewWriteContext()
 	v := reflect.ValueOf(root)
-	if err := rootNode.Write(wc, reflect.Value{}, v); err != nil {
+	val := rootNode.NewValFrom(v)
+	if err := rootNode.Write(wc, val); err != nil {
 		return errors.Wrapf(err, "generating write targets")
 	}
 	for _, t := range wc.targets.Snapshot() {

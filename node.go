@@ -19,14 +19,19 @@ type Node interface {
 	// and val will be the value of that struct field.
 	ChildPathName(child Node, key, val reflect.Value) string
 	// PathName returns the path name of this node. Implemented in NodeBase.
-	PathName(key, val reflect.Value) string
+	PathName(Val) string
 	// WriteTargets writes file targets for this node to the context.
-	WriteTargets(c WriteContext, key, val reflect.Value) error
+	WriteTargets(c WriteContext, val Val) error
 	// Write writes file targets for this node to the context by first ensuring
 	// val is not a pointer and then calling WriteTargets.
-	Write(c WriteContext, key, val reflect.Value) error
+	Write(c WriteContext, val Val) error
 	// Read wraps ReadTargets and takes care of pointers.
-	Read(c ReadContext, key reflect.Value) (reflect.Value, error)
+	Read(c ReadContext, val Val) error
 	// ReadTargets reads key from contexts and returns its value.
-	ReadTargets(c ReadContext, key reflect.Value) (reflect.Value, error)
+	ReadTargets(c ReadContext, val Val) error
+
+	NewVal() Val
+	NewValFrom(reflect.Value) Val
+	NewKeyedVal(key reflect.Value) Val
+	NewKeyedValFrom(key, val reflect.Value) Val
 }

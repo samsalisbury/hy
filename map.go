@@ -33,44 +33,33 @@ func (n *MapNode) ChildPathName(child Node, key, val reflect.Value) string {
 }
 
 // ReadTargets reads targets into map entries.
-func (n *MapNode) ReadTargets(c ReadContext, key reflect.Value) (reflect.Value, error) {
-	val := reflect.MakeMap(n.Type)
+func (n *MapNode) ReadTargets(c ReadContext, val Val) error {
 	list := c.List()
 	for _, keyStr := range list {
 		elemKey := reflect.ValueOf(keyStr)
 		elem := *n.ElemNode
 		elemContext := c.Push(keyStr)
-		elemVal, err := elem.Read(elemContext, elemKey)
+		elemVal := elem.NewKeyedVal(elemKey)
+		err := elem.Read(elemContext, elemVal)
 		if err != nil {
-			return val, errors.Wrapf(err, "reading child %s", keyStr)
+			return errors.Wrapf(err, "reading child %s", keyStr)
 		}
-		val.SetMapIndex(elemKey, elemVal)
+		val.SetMapElement(elemVal)
 	}
-	return val, nil
+	return nil
 }
 
 // WriteTargets writes all map elements.
-func (n *MapNode) WriteTargets(c WriteContext, key, val reflect.Value) error {
+func (n *MapNode) WriteTargets(c WriteContext, val Val) error {
 	elemNode := *n.ElemNode
-	for _, k := range val.MapKeys() {
-		v := val.MapIndex(k)
-		// make an addressable copy of v
-		// this is ripe for refactoring so we don't need to jump through hoops
-		// to get the address.
-		newVal := reflect.New(v.Type()).Elem()
-		newVal.Set(v)
-		v = newVal
-		vAddr := v
-		if vAddr.Kind() != reflect.Ptr {
-			vAddr = v.Addr()
-		}
+	for _, elemVal := range val.MapElements(elemNode) {
 		if n.Field != nil && n.Field.KeyField != "" {
-			n.Field.SetKeyFunc.Call([]reflect.Value{vAddr, k})
+			n.Field.SetKeyFunc.Call([]reflect.Value{elemVal.Ptr, elemVal.Key})
 		}
-		//log.Printf("Writing %s[%s] = %+ v\n", n.Type, k, v)
-		childContext := c.Push(elemNode.PathName(k, v))
-		if err := elemNode.Write(childContext, k, v); err != nil {
-			return errors.Wrapf(err, "writing map index %q failed", fmt.Sprint(k))
+		childContext := c.Push(elemNode.PathName(elemVal))
+		if err := elemNode.Write(childContext, elemVal); err != nil {
+			return errors.Wrapf(err, "writing map index %q failed",
+				fmt.Sprint(elemVal.Key))
 		}
 	}
 	return nil

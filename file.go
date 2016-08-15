@@ -22,14 +22,12 @@ func (n *FileNode) ChildPathName(child Node, key, val reflect.Value) string {
 }
 
 // ReadTargets reads a single file target.
-func (n *FileNode) ReadTargets(c ReadContext, key reflect.Value) (reflect.Value, error) {
-	val := reflect.New(n.Type)
-	err := c.Read(val.Interface())
-	return val.Elem(), errors.Wrapf(err, "reading file")
-	//return val.Elem(), errors.Wrapf(c.Read(val.Interface()), "reading file")
+func (n *FileNode) ReadTargets(c ReadContext, val Val) error {
+	err := c.Read(val.Ptr.Interface())
+	return errors.Wrapf(err, "reading file")
 }
 
 // WriteTargets returns the write target for this file.
-func (n *FileNode) WriteTargets(c WriteContext, key, val reflect.Value) error {
-	return errors.Wrap(c.SetValue(val.Interface()), "writing file target")
+func (n *FileNode) WriteTargets(c WriteContext, val Val) error {
+	return errors.Wrap(c.SetValue(val), "writing file target")
 }

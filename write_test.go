@@ -74,7 +74,8 @@ func TestNode_Write_struct(t *testing.T) {
 	}
 	wc := NewWriteContext()
 	v := reflect.ValueOf(testWriteStructData)
-	if err := n.Write(wc, reflect.Value{}, v); err != nil {
+	val := n.NewValFrom(v)
+	if err := n.Write(wc, val); err != nil {
 		t.Fatal(err)
 	}
 	targets := wc.targets

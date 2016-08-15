@@ -59,55 +59,59 @@ func (n *StructNode) ChildPathName(child Node, key, val reflect.Value) string {
 }
 
 // ReadTargets reads targets into struct fields.
-func (n *StructNode) ReadTargets(c ReadContext, key reflect.Value) (reflect.Value, error) {
-	val := reflect.New(n.Type)
-	if err := c.Read(val.Interface()); err != nil {
-		return val, errors.Wrapf(err, "reading struct fields")
+func (n *StructNode) ReadTargets(c ReadContext, val Val) error {
+	if err := c.Read(val.Ptr.Interface()); err != nil {
+		return errors.Wrapf(err, "reading struct fields")
 	}
-	val = val.Elem()
 	for fieldName, childPtr := range n.Children {
-		child := *childPtr
-		childPathName := child.PathName(reflect.Value{}, reflect.Value{})
+		childNode := *childPtr
+		childPathName := childNode.PathName(val)
 		childContext := c.Push(childPathName)
 		if !childContext.Exists() {
 			continue
 		}
-		childVal, err := child.Read(childContext, reflect.Value{})
+		childVal := childNode.NewVal()
+		err := childNode.Read(childContext, childVal)
 		if err != nil {
-			return val, errors.Wrapf(err, "reading child %s", fieldName)
+			return errors.Wrapf(err, "reading child %s", fieldName)
 		}
-		val.FieldByName(fieldName).Set(childVal)
+		val.SetField(fieldName, childVal)
 	}
-	return val, nil
+	return nil
 }
 
 // WriteTargets generates file targets.
-func (n *StructNode) WriteTargets(c WriteContext, key, val reflect.Value) error {
-	if err := c.SetValue(n.prepareFileData(val)); err != nil {
-		return errors.Wrap(err, "writing self")
+func (n *StructNode) WriteTargets(c WriteContext, val Val) error {
+	if fieldData := n.prepareFileData(val); fieldData.IsValid() {
+		if err := c.SetRawValue(fieldData); err != nil {
+			return errors.Wrap(err, "writing self")
+		}
 	}
-	if !val.IsValid() {
+	if val.IsZero() {
 		return nil
 	}
 	for name, childPtr := range n.Children {
 		childNode := *childPtr
 		childKey := reflect.ValueOf(name)
-		childVal := val.FieldByName(name)
-		childContext := c.Push(childNode.PathName(childKey, childVal))
-		if err := childNode.Write(childContext, childKey, childVal); err != nil {
+		childVal := childNode.NewKeyedValFrom(childKey, val.GetField(name))
+		if childVal.IsZero() {
+			continue
+		}
+		childContext := c.Push(childNode.PathName(childVal))
+		if err := childNode.Write(childContext, childVal); err != nil {
 			return errors.Wrapf(err, "failed to write child %s", name)
 		}
 	}
 	return nil
 }
 
-func (n *StructNode) prepareFileData(val reflect.Value) interface{} {
-	if !val.IsValid() {
-		return nil
+func (n *StructNode) prepareFileData(val Val) reflect.Value {
+	if val.IsZero() {
+		return reflect.Value{}
 	}
 	out := make(map[string]interface{}, len(n.Fields))
 	for name := range n.Fields {
-		out[name] = val.FieldByName(name).Interface()
+		out[name] = val.GetField(name).Interface()
 	}
-	return out
+	return reflect.ValueOf(out)
 }

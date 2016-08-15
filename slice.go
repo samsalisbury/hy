@@ -25,35 +25,31 @@ func (n *SliceNode) ChildPathName(child Node, key, val reflect.Value) string {
 }
 
 // ReadTargets reads targets into slice indicies.
-func (n *SliceNode) ReadTargets(c ReadContext, key reflect.Value) (reflect.Value, error) {
+func (n *SliceNode) ReadTargets(c ReadContext, val Val) error {
 	list := c.List()
-	val := reflect.MakeSlice(n.Type, len(list), len(list))
 	for _, indexStr := range list {
 		index, err := strconv.Atoi(indexStr)
 		if err != nil {
-			return val, errors.Wrapf(err, "converting %q to int", indexStr)
+			return errors.Wrapf(err, "converting %q to int", indexStr)
 		}
 		elemKey := reflect.ValueOf(index)
 		elem := *n.ElemNode
 		elemContext := c.Push(indexStr)
-		elemVal, err := elem.Read(elemContext, elemKey)
-		if err != nil {
-			return val, errors.Wrapf(err, "reading index %d", index)
+		elemVal := elem.NewKeyedVal(elemKey)
+		if err := elem.Read(elemContext, elemVal); err != nil {
+			return errors.Wrapf(err, "reading index %d", index)
 		}
-		reflect.Append(val, elemVal)
-		val.Index(index).Set(elemVal)
+		val.Append(elemVal)
 	}
-	return val, nil
+	return nil
 }
 
 // WriteTargets writes all the elements of the slice.
-func (n *SliceNode) WriteTargets(c WriteContext, key, val reflect.Value) error {
+func (n *SliceNode) WriteTargets(c WriteContext, val Val) error {
 	elemNode := *n.ElemNode
-	for i := 0; i < val.Len(); i++ {
-		v := val.Index(i)
-		k := reflect.ValueOf(i)
-		childContext := c.Push(elemNode.PathName(k, v))
-		if err := elemNode.Write(childContext, k, v); err != nil {
+	for i, childVal := range val.SliceElements(elemNode) {
+		childContext := c.Push(elemNode.PathName(childVal))
+		if err := elemNode.Write(childContext, childVal); err != nil {
 			return errors.Wrapf(err, "writing slice index %d failed", i)
 		}
 	}

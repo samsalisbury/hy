@@ -50,38 +50,71 @@ func NewNodeBase(id NodeID, parent Node, field *FieldInfo, self *Node) NodeBase 
 	}
 }
 
-func (base NodeBase) Read(c ReadContext, key reflect.Value) (reflect.Value, error) {
-	v, err := (*base.self).ReadTargets(c, key)
-	if err != nil {
-		return v, errors.Wrapf(err, "reading node")
+// NewVal creates a new Val of this node's type.
+func (base NodeBase) NewVal() Val {
+	ptr := reflect.New(base.Type)
+	if base.Type.Kind() == reflect.Map {
+		ptr.Elem().Set(reflect.MakeMap(base.Type))
 	}
-	if base.IsPtr {
-		v = v.Addr()
+	return Val{
+		Base:  &base,
+		Ptr:   ptr,
+		IsPtr: base.IsPtr,
 	}
-	return v, nil
 }
 
-func (base NodeBase) Write(c WriteContext, key, val reflect.Value) error {
-	if base.IsPtr {
-		val = val.Elem()
+// NewKeyedVal is similar to NewVal but adds an associated key.
+func (base NodeBase) NewKeyedVal(key reflect.Value) Val {
+	val := base.NewVal()
+	val.Key = key
+	return val
+}
+
+// NewValFrom creates a Val from an existing value.
+func (base NodeBase) NewValFrom(v reflect.Value) Val {
+	val := base.NewVal()
+	if v.Kind() == reflect.Ptr {
+		val.Ptr = v
+		return val
 	}
-	if !base.HasKey &&
-		(!val.IsValid() || reflect.DeepEqual(val.Interface(), base.Zero)) {
+	if v.CanAddr() {
+		val.Ptr = v.Addr()
+		return val
+	}
+	val.Ptr = reflect.New(base.Type)
+	val.Ptr.Elem().Set(v)
+	return val
+}
+
+// NewKeyedValFrom is similar to NewValFrom but adds an associated key.
+func (base NodeBase) NewKeyedValFrom(k, v reflect.Value) Val {
+	val := base.NewValFrom(v)
+	val.Key = k
+	return val
+}
+
+func (base NodeBase) Read(c ReadContext, val Val) error {
+	return errors.Wrapf((*base.self).ReadTargets(c, val), "reading node")
+}
+
+func (base NodeBase) Write(c WriteContext, val Val) error {
+	// Don't write zero values unless they have a key.
+	if !base.HasKey && val.IsZero() {
 		return nil
 	}
-	return (*base.self).WriteTargets(c, key, val)
+	return (*base.self).WriteTargets(c, val)
 }
 
 // PathName returns the path name segment of this node by querying its tag,
 // field name, and parent's ChildPathName func.
-func (base NodeBase) PathName(key, val reflect.Value) string {
+func (base NodeBase) PathName(val Val) string {
 	if fixedName, ok := base.FixedPathName(); ok {
 		return fixedName
 	}
 	if base.Parent == nil {
 		return ""
 	}
-	return base.Parent.ChildPathName(*base.self, key, val)
+	return base.Parent.ChildPathName(*base.self, val.Key, val.Ptr)
 }
 
 // FixedPathName returns the fixed path name of this node.
