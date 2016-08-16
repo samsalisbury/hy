@@ -5,40 +5,64 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+
+	"github.com/pkg/errors"
 )
 
-type TestWriteStruct struct {
-	Name         string              // regular field
-	Int          int                 // regular field
-	InlineSlice  []string            // regular field
-	InlineMap    map[string]int      // regular field
-	StructB      StructB             // regular field
-	StructBPtr   *StructB            // regular field
-	IgnoredField string              `hy:"-"`                // not output anywhere
-	StructFile   StructB             `hy:"a-file"`           // a single file
-	StringFile   string              `hy:"a-string-file"`    // a single file
-	SliceFile    []string            `hy:"a-slice-file"`     // a single file
-	MapFile      map[string]string   `hy:"a-map-file"`       // a single file
-	Nested       *TestWriteStruct    `hy:"nested"`           // like a new root
-	Slice        []StructB           `hy:"slice/"`           // file per element
-	Map          map[string]StructB  `hy:"map/,Name"`        // file per element
-	MapOfPtr     map[string]*StructB `hy:"map-of-ptr/,Name"` // file per element
+type TestStruct struct {
+	Name             string                      // regular field
+	Int              int                         // regular field
+	InlineSlice      []string                    // regular field
+	InlineMap        map[string]int              // regular field
+	StructB          StructB                     // regular field
+	StructBPtr       *StructB                    // regular field
+	IgnoredField     string                      `hy:"-"`                // not output anywhere
+	StructFile       StructB                     `hy:"a-file"`           // a single file
+	StringFile       string                      `hy:"a-string-file"`    // a single file
+	SliceFile        []string                    `hy:"a-slice-file"`     // a single file
+	MapFile          map[string]string           `hy:"a-map-file"`       // a single file
+	Nested           *TestStruct                 `hy:"nested"`           // like a new root
+	Slice            []StructB                   `hy:"slice/"`           // file per element
+	Map              map[string]StructB          `hy:"map/,Name"`        // file per element
+	MapOfPtr         map[string]*StructB         `hy:"map-of-ptr/,Name"` // file per element
+	TextMarshalerKey map[*TextMarshaler]*StructB `hy:"textmarshaler/"`   // file per element
 }
 
-var testWriteStructData = TestWriteStruct{
+type TextMarshaler struct {
+	String string
+	Int    int
+}
+
+func (tm TextMarshaler) MarshalText() ([]byte, error) {
+	return []byte(fmt.Sprintf("%s-%d", tm.String, tm.Int)), nil
+}
+
+func (tm *TextMarshaler) UnmarshalText(text []byte) error {
+	s := string(text)
+	n, err := fmt.Sscanf(s, "%s-%d", &tm.String, &tm.Int)
+	if err != nil {
+		return errors.Wrapf(err, "unmarshaling %s", s)
+	}
+	if n != 2 {
+		return errors.Errorf("%s has %d missing fields", s, 2-n)
+	}
+	return nil
+}
+
+var testWriteStructData = TestStruct{
 	Name:        "Test struct writing",
 	Int:         1,
 	InlineSlice: []string{"a", "string", "slice"},
 	InlineMap:   map[string]int{"one": 1, "two": 2, "three": 3},
 	StructFile:  StructB{Name: "A file"},
 	StringFile:  "A string in a file.",
-	Nested: &TestWriteStruct{
+	Nested: &TestStruct{
 		Name: "A nested struct pointer.",
 		Int:  2,
 		Slice: []StructB{
 			{Name: "Nested One"}, {Name: "Nested Two"},
 		},
-		Nested: &TestWriteStruct{
+		Nested: &TestStruct{
 			SliceFile: []string{"this", "is", "a", "slice", "in", "a", "file"},
 			MapFile:   map[string]string{"deeply-nested": "map", "in a file": "yes"},
 		},
@@ -64,11 +88,15 @@ var testWriteStructData = TestWriteStruct{
 		"First":  {},
 		"Second": {},
 	},
+	TextMarshalerKey: map[*TextMarshaler]*StructB{
+		{"Test", 1}:     nil,
+		{"Another", 13}: nil,
+	},
 }
 
 func TestNode_Write_struct(t *testing.T) {
 	c := NewCodec()
-	n, err := c.Analyse(TestWriteStruct{})
+	n, err := c.Analyse(TestStruct{})
 	if err != nil {
 		t.Fatal(err)
 	}

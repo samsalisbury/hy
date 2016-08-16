@@ -17,7 +17,7 @@ func TestCodec_Read(t *testing.T) {
 		c.Writer = jsonWriter
 	})
 
-	v := TestWriteStruct{}
+	v := TestStruct{}
 
 	if err := c.Read("testdata/in", &v); err != nil {
 		t.Fatal(err)
@@ -30,7 +30,7 @@ func TestCodec_Read(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	v2 := TestWriteStruct{}
+	v2 := TestStruct{}
 	if err := c.Read("testdata/roundtripped", &v2); err != nil {
 		t.Fatal(err)
 	}
