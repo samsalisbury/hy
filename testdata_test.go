@@ -106,6 +106,12 @@ func init() {
 		{FilePath: "textmarshaler/Another-13",
 			Value: nil,
 		},
+		{FilePath: "textmarshalerptr/Test-2",
+			Value: nil,
+		},
+		{FilePath: "textmarshalerptr/Another-14",
+			Value: nil,
+		},
 	}...)
 	if err != nil {
 		panic(err)

@@ -12,22 +12,23 @@ import (
 )
 
 type TestStruct struct {
-	Name             string                      // regular field
-	Int              int                         // regular field
-	InlineSlice      []string                    // regular field
-	InlineMap        map[string]int              // regular field
-	StructB          StructB                     // regular field
-	StructBPtr       *StructB                    // regular field
-	IgnoredField     string                      `hy:"-"`                // not output anywhere
-	StructFile       StructB                     `hy:"a-file"`           // a single file
-	StringFile       string                      `hy:"a-string-file"`    // a single file
-	SliceFile        []string                    `hy:"a-slice-file"`     // a single file
-	MapFile          map[string]string           `hy:"a-map-file"`       // a single file
-	Nested           *TestStruct                 `hy:"nested"`           // like a new root
-	Slice            []StructB                   `hy:"slice/"`           // file per element
-	Map              map[string]StructB          `hy:"map/,Name"`        // file per element
-	MapOfPtr         map[string]*StructB         `hy:"map-of-ptr/,Name"` // file per element
-	TextMarshalerKey map[*TextMarshaler]*StructB `hy:"textmarshaler/"`   // file per element
+	Name                string                      // regular field
+	Int                 int                         // regular field
+	InlineSlice         []string                    // regular field
+	InlineMap           map[string]int              // regular field
+	StructB             StructB                     // regular field
+	StructBPtr          *StructB                    // regular field
+	IgnoredField        string                      `hy:"-"`                 // not output anywhere
+	StructFile          StructB                     `hy:"a-file"`            // a single file
+	StringFile          string                      `hy:"a-string-file"`     // a single file
+	SliceFile           []string                    `hy:"a-slice-file"`      // a single file
+	MapFile             map[string]string           `hy:"a-map-file"`        // a single file
+	Nested              *TestStruct                 `hy:"nested"`            // like a new root
+	Slice               []StructB                   `hy:"slice/"`            // file per element
+	Map                 map[string]StructB          `hy:"map/,Name"`         // file per element
+	MapOfPtr            map[string]*StructB         `hy:"map-of-ptr/,Name"`  // file per element
+	TextMarshalerKey    map[TextMarshaler]*StructB  `hy:"textmarshaler/"`    // file per element
+	TextMarshalerPtrKey map[*TextMarshaler]*StructB `hy:"textmarshalerptr/"` // file per element
 }
 
 type TextMarshaler struct {
@@ -91,9 +92,13 @@ var testWriteStructData = TestStruct{
 		"First":  {},
 		"Second": {},
 	},
-	TextMarshalerKey: map[*TextMarshaler]*StructB{
+	TextMarshalerKey: map[TextMarshaler]*StructB{
 		{"Test", 1}:     nil,
 		{"Another", 13}: nil,
+	},
+	TextMarshalerPtrKey: map[*TextMarshaler]*StructB{
+		{"Test", 2}:     nil,
+		{"Another", 14}: nil,
 	},
 }
 

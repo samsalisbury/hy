@@ -36,6 +36,8 @@ func (MapNode) New(base NodeBase, c *Codec) (Node, error) {
 	}
 	switch n.KeyType.Kind() {
 	default:
+		// Note: this can be made much more efficient by implementing separate
+		// funcs per pointer/non-pointer version of marshal and unmarshal.
 		n.MarshalKey = defaultMarshalKey
 		n.UnmarshalKey = defaultUnmarshalKey
 	case reflect.String:
