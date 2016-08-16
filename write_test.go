@@ -3,7 +3,9 @@ package hy
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/pkg/errors"
@@ -39,8 +41,9 @@ func (tm TextMarshaler) MarshalText() ([]byte, error) {
 
 func (tm *TextMarshaler) UnmarshalText(text []byte) error {
 	s := string(text)
-	n, err := fmt.Sscanf(s, "%s-%d", &tm.String, &tm.Int)
-	if err != nil {
+	s = strings.Replace(s, "-", " ", -1)
+	n, err := fmt.Sscanf(s, "%s %d", &tm.String, &tm.Int)
+	if err != nil && err != io.EOF {
 		return errors.Wrapf(err, "unmarshaling %s", s)
 	}
 	if n != 2 {

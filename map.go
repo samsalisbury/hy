@@ -35,6 +35,9 @@ func (MapNode) New(base NodeBase, c *Codec) (Node, error) {
 		KeyType: base.Type.Key(),
 	}
 	switch n.KeyType.Kind() {
+	default:
+		n.MarshalKey = defaultMarshalKey
+		n.UnmarshalKey = defaultUnmarshalKey
 	case reflect.String:
 		n.MarshalKey = func(key reflect.Value) string {
 			return fmt.Sprint(key)
@@ -44,17 +47,45 @@ func (MapNode) New(base NodeBase, c *Codec) (Node, error) {
 			return nil
 		}
 	}
-	if n.KeyType.Implements(tmType) {
-		n.MarshalKey = func(key reflect.Value) string {
-			tm := key.Interface().(encoding.TextMarshaler)
-			b, err := tm.MarshalText()
-			if err != nil {
-				panic(errors.Wrapf(err, "unmarshaling key %q for %s", key, n))
-			}
-			return string(b)
-		}
-	}
 	return n, errors.Wrap(n.AnalyseElemNode(n, c), "analysing map element node")
+}
+
+func defaultMarshalKey(key reflect.Value) string {
+	i := key.Interface()
+	tm, ok := i.(encoding.TextMarshaler)
+	if !ok {
+		if key.Kind() == reflect.Ptr {
+			i = key.Elem().Interface()
+		} else {
+			i = key.Addr().Interface()
+		}
+		tm, ok = i.(encoding.TextMarshaler)
+	}
+	if !ok {
+		panic(errors.Errorf("%s does not implement %s"+key.Type().String(), tmType))
+	}
+	b, err := tm.MarshalText()
+	if err != nil {
+		panic(errors.Errorf("marshal failed: %s", err.Error()))
+	}
+	return string(b)
+}
+
+func defaultUnmarshalKey(s string, key reflect.Value) error {
+	if key.Kind() != reflect.Ptr {
+		// Unmarshaling is ineffective on non-pointer receivers, so don't look
+		// for it.
+		key = key.Addr()
+	}
+	if key.IsNil() {
+		key.Set(reflect.New(key.Type().Elem()))
+	}
+	i := key.Interface()
+	tu, ok := i.(encoding.TextUnmarshaler)
+	if !ok {
+		return errors.Errorf("%T does not implement %s", i, tuType)
+	}
+	return errors.Wrapf(tu.UnmarshalText([]byte(s)), "unmarshaling %q", s)
 }
 
 var tmType = reflect.TypeOf((*encoding.TextMarshaler)(nil)).Elem()
@@ -69,10 +100,13 @@ func (n *MapNode) ChildPathName(child Node, key, val reflect.Value) string {
 func (n *MapNode) ReadTargets(c ReadContext, val Val) error {
 	list := c.List()
 	for _, keyStr := range list {
-		elemKey := reflect.ValueOf(keyStr)
+		keyVal := reflect.New(n.KeyType).Elem()
+		if err := n.UnmarshalKey(keyStr, keyVal); err != nil {
+			return errors.Wrapf(err, "unmarshaling key")
+		}
 		elem := *n.ElemNode
 		elemContext := c.Push(keyStr)
-		elemVal := elem.NewKeyedVal(elemKey)
+		elemVal := elem.NewKeyedVal(keyVal)
 		err := elem.Read(elemContext, elemVal)
 		if err != nil {
 			return errors.Wrapf(err, "reading child %s", keyStr)
