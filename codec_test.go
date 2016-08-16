@@ -35,7 +35,7 @@ func TestCodec_Write(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expectedNumCalls := int64(23)
+	expectedNumCalls := int64(25)
 	if *numCalls != expectedNumCalls {
 		t.Errorf("MarshalFunc called %d times; want %d", *numCalls, expectedNumCalls)
 	}

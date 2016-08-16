@@ -112,6 +112,14 @@ func init() {
 		{FilePath: "textmarshalerptr/Another-14",
 			Value: nil,
 		},
+		{FilePath: "specialmap/Special-3",
+			Value: map[string]interface{}{
+				"Name": "Special",
+			},
+		},
+		{FilePath: "specialmap/Another-15",
+			Value: nil,
+		},
 	}...)
 	if err != nil {
 		panic(err)

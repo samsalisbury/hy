@@ -29,7 +29,7 @@ func NewCodec(configure ...func(*Codec)) *Codec {
 // NodeTypes contains the set of nodes types in order of preference.
 // Earlier types will be detected before later ones.
 var NodeTypes = []Node{
-	&StructNode{}, &FileNode{}, &MapNode{}, &SliceNode{},
+	&SpecialMapNode{}, &StructNode{}, &FileNode{}, &MapNode{}, &SliceNode{},
 }
 
 // NewNode creates a new node.

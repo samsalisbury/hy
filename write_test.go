@@ -29,7 +29,15 @@ type TestStruct struct {
 	MapOfPtr            map[string]*StructB         `hy:"map-of-ptr/,Name"`  // file per element
 	TextMarshalerKey    map[TextMarshaler]*StructB  `hy:"textmarshaler/"`    // file per element
 	TextMarshalerPtrKey map[*TextMarshaler]*StructB `hy:"textmarshalerptr/"` // file per element
+	SpecialMap          SpecialMap                  `hy:"specialmap/"`       // file per element
 }
+
+type SpecialMap struct {
+	m map[TextMarshaler]*StructB
+}
+
+func (s SpecialMap) SetAll(m map[TextMarshaler]*StructB) { s.m = m }
+func (s SpecialMap) GetAll() map[TextMarshaler]*StructB  { return s.m }
 
 type TextMarshaler struct {
 	String string
@@ -100,6 +108,10 @@ var testWriteStructData = TestStruct{
 		{"Test", 2}:     nil,
 		{"Another", 14}: nil,
 	},
+	SpecialMap: SpecialMap{m: map[TextMarshaler]*StructB{
+		{"Special", 3}:  {Name: "Special"},
+		{"Another", 15}: nil,
+	}},
 }
 
 func TestNode_Write_struct(t *testing.T) {
