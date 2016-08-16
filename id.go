@@ -15,36 +15,38 @@ type NodeID struct {
 	Type reflect.Type
 	// IsPtr indicates if OwnType is a pointer really.
 	IsPtr bool
-	// IsLeaf indicates if this node can only be a leaf.
-	IsLeaf bool
 	// FieldName is the name of the parent field containing this node. FieldName
 	// will be empty unless ParentType is a struct.
 	FieldName string
 }
 
-// NewNodeID creates a new node ID.
-func NewNodeID(parentType, typ reflect.Type, fieldName string) (NodeID, error) {
-	t := typ
-	var isPtr bool
-	k := t.Kind()
+func normalise(original reflect.Type) (normal reflect.Type, k reflect.Kind, ptr bool, err error) {
+	normal = original
+	k = original.Kind()
 	if k == reflect.Ptr {
-		isPtr = true
-		t = t.Elem()
-		k = t.Kind()
+		ptr = true
+		normal = normal.Elem()
+		k = normal.Kind()
 		if k == reflect.Ptr {
-			return NodeID{}, errors.New("cannot analyse pointer to pointer")
+			err = errors.New("cannot analyse pointer to pointer")
 		}
 	}
 	if k == reflect.Interface {
-		// TODO: We should allow interfaces that implement map.Get/Set and elem.GetID/SetID.
-		return NodeID{}, errors.New("cannot analyse kind interface")
+		err = errors.New("cannot analyse kind interface")
 	}
-	isLeaf := (k != reflect.Struct && k != reflect.Map && k != reflect.Slice)
+	return
+}
+
+// NewNodeID creates a new node ID.
+func NewNodeID(parentType, typ reflect.Type, fieldName string) (NodeID, error) {
+	t, _, isPtr, err := normalise(typ)
+	if err != nil {
+		return NodeID{}, err
+	}
 	return NodeID{
 		ParentType: parentType,
 		Type:       t,
 		IsPtr:      isPtr,
-		IsLeaf:     isLeaf,
 		FieldName:  fieldName,
 	}, nil
 }

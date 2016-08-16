@@ -73,7 +73,12 @@ func (c *Codec) Analyse(root interface{}) (Node, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to analyse %T", root)
 	}
-	if id.IsLeaf {
+	t, k, _, err := normalise(t)
+	if err != nil {
+		return nil, err
+	}
+	isLeaf := (k != reflect.Struct && k != reflect.Map && k != reflect.Slice)
+	if isLeaf {
 		return nil, errors.Errorf("failed to analyse %s: cannot analyse kind %s",
 			id.Type, id.Type.Kind())
 	}
@@ -97,7 +102,7 @@ func (c *Codec) NewNode(parent Node, id NodeID, field *FieldInfo) (*Node, error)
 		*n, err = c.NewStructNode(base)
 		return n, err
 	}
-	if id.IsLeaf || !field.Tag.IsDir {
+	if !field.Tag.IsDir {
 		*n = NewFileNode(base)
 		return n, nil
 	}
