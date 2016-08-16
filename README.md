@@ -7,22 +7,19 @@
 [![License MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 ## TODO
-- Improve memory efficiency (currently loads everything eagerly in-memory).
+- Improve memory efficiency (currently loads everything eagerly in-memory, should use readers and (de)coders rather than []byte and marshalers).
+- Add test cases for all failure modes.
+- Make analysis concurrent.
+- Make writing concurrent.
+- Make reading concurrent.
 - Add options for default path names:
   - lowerCamelCase
   - CamelCase
   - snake_case
   - lowercaseonly
-- Add support for auto-filling ID fields in map/slice elements on read.
-  - Default field:  ID string
-  - Default getter: ID() string
-  - Default setter: SetID(string)
 - On write, need to pick:
   - Fail if ID field not matching key or index?
   - Overwrite ID with current key or index?
   - Elide ID field from output altogether? (This should be the default, so
     it only matters in memory.)
   - Other?
-- Add support for writing special maps with default fields/methods:
-- Add support for writing actual files with a marshaller.
-- Add support for reading actual files with a marshaller.
