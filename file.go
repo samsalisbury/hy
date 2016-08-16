@@ -11,9 +11,17 @@ type FileNode struct {
 	NodeBase
 }
 
-// NewFileNode creates a new file node.
-func NewFileNode(base NodeBase) Node {
-	return &FileNode{NodeBase: base}
+// Detect always returns nil.
+func (FileNode) Detect(base NodeBase) error {
+	if base.Field.Tag.IsDir {
+		return errors.Errorf("got directory, want file")
+	}
+	return nil
+}
+
+// New returns a new file node and nil error.
+func (FileNode) New(base NodeBase, _ *Codec) (Node, error) {
+	return &FileNode{NodeBase: base}, nil
 }
 
 // ChildPathName returns an empty string (file targets don't have children).

@@ -15,8 +15,16 @@ type StructNode struct {
 	Children map[string]*Node
 }
 
-// NewStructNode makes a new struct node.
-func (c *Codec) NewStructNode(base NodeBase) (Node, error) {
+// Detect returns nil if this base is a struct.
+func (StructNode) Detect(base NodeBase) error {
+	if base.Kind == reflect.Struct {
+		return nil
+	}
+	return errors.Errorf("got kind %s; want struct", base.Kind)
+}
+
+// New creates a new StructNode.
+func (StructNode) New(base NodeBase, c *Codec) (Node, error) {
 	// Children need a pointer to this node, so create it first.
 	n := &StructNode{
 		FileNode: FileNode{

@@ -13,8 +13,16 @@ type SliceNode struct {
 	*DirNodeBase
 }
 
-// NewSliceNode makes a new slice node.
-func (c *Codec) NewSliceNode(base NodeBase) (Node, error) {
+// Detect returns nil if this base is a slice.
+func (SliceNode) Detect(base NodeBase) error {
+	if base.Kind == reflect.Slice {
+		return nil
+	}
+	return errors.Errorf("got kind %s; want slice")
+}
+
+// New returns a new slice node.
+func (SliceNode) New(base NodeBase, c *Codec) (Node, error) {
 	n := &SliceNode{&DirNodeBase{NodeBase: base}}
 	return n, errors.Wrap(n.AnalyseElemNode(n, c), "analysing slice element node")
 }

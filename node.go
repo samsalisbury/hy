@@ -4,6 +4,10 @@ import "reflect"
 
 // Node represents a generic node in the structure.
 type Node interface {
+	// Detect returns nil if this node can handle this base type.
+	Detect(NodeBase) error
+	// New returns a new instance of a node.
+	New(NodeBase, *Codec) (Node, error)
 	// ID returns this node's ID.
 	ID() NodeID
 	// FixedPathName returns the indubitable path segment name of this node.

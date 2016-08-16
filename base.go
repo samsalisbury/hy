@@ -17,6 +17,8 @@ type NodeBase struct {
 	Zero interface{}
 	// HasKey indicates if this type has a key (e.g. maps and slices)
 	HasKey bool
+	// Kind is the kind of NodeID.Type.
+	Kind reflect.Kind
 	// self is a pointer to the node based on this node base. This means more
 	// common functionality can be handled by NodeBase, by allowing it to call
 	// methods on it's differentiated self.
@@ -46,6 +48,7 @@ func NewNodeBase(id NodeID, parent Node, field *FieldInfo, self *Node) NodeBase 
 		Field:  field,
 		Zero:   zero,
 		HasKey: parentKind == reflect.Map || parentKind == reflect.Slice,
+		Kind:   id.Type.Kind(),
 		self:   self,
 	}
 }

@@ -26,6 +26,32 @@ func NewCodec(configure ...func(*Codec)) *Codec {
 	return c
 }
 
+// NodeTypes contains the set of nodes types in order of preference.
+// Earlier types will be detected before later ones.
+var NodeTypes = []Node{
+	&StructNode{}, &FileNode{}, &MapNode{}, &SliceNode{},
+}
+
+// NewNode creates a new node.
+func (c *Codec) NewNode(parent Node, id NodeID, field *FieldInfo) (*Node, error) {
+	n, new := c.nodes.Register(id)
+	if !new {
+		return n, nil
+	}
+	var err error
+	base := NewNodeBase(id, parent, field, n)
+	for _, nt := range NodeTypes {
+		if err := nt.Detect(base); err == nil {
+			*n, err = nt.New(base, c)
+			if err != nil {
+				continue
+			}
+			return n, err
+		}
+	}
+	return n, errors.Wrapf(err, "analysing %s failed; no nodes matched", id)
+}
+
 func (c *Codec) Read(prefix string, root interface{}) error {
 	rootNode, err := c.Analyse(root)
 	if err != nil {
@@ -87,32 +113,4 @@ func (c *Codec) Analyse(root interface{}) (Node, error) {
 		return nil, errors.Wrapf(err, "failed to analyse %T", root)
 	}
 	return *n, err
-}
-
-// NewNode creates a new node.
-func (c *Codec) NewNode(parent Node, id NodeID, field *FieldInfo) (*Node, error) {
-	n, new := c.nodes.Register(id)
-	if !new {
-		return n, nil
-	}
-	var err error
-	k := id.Type.Kind()
-	base := NewNodeBase(id, parent, field, n)
-	if k == reflect.Struct {
-		*n, err = c.NewStructNode(base)
-		return n, err
-	}
-	if !field.Tag.IsDir {
-		*n = NewFileNode(base)
-		return n, nil
-	}
-	switch k {
-	default:
-		*n = NewFileNode(base)
-	case reflect.Map:
-		*n, err = c.NewMapNode(base)
-	case reflect.Slice:
-		*n, err = c.NewSliceNode(base)
-	}
-	return n, errors.Wrapf(err, "analysing %s failed", id)
 }

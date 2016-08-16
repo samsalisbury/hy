@@ -13,8 +13,16 @@ type MapNode struct {
 	KeyType reflect.Type
 }
 
-// NewMapNode makes a new map node.
-func (c *Codec) NewMapNode(base NodeBase) (Node, error) {
+// Detect returns nil if this base is a map.
+func (MapNode) Detect(base NodeBase) error {
+	if base.Kind == reflect.Map {
+		return nil
+	}
+	return errors.Errorf("got kind %s; want map", base.Kind)
+}
+
+// New returns a new MapNode.
+func (MapNode) New(base NodeBase, c *Codec) (Node, error) {
 	n := &MapNode{
 		DirNodeBase: &DirNodeBase{
 			NodeBase: base,
